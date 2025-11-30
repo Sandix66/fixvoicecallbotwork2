@@ -147,15 +147,11 @@ async def get_call_history(current_user: dict = Depends(verify_token)):
 @router.get("/{call_id}", response_model=CallResponse)
 async def get_call(call_id: str, current_user: dict = Depends(verify_token)):
     """Get specific call details"""
-    # Get call from Firestore
-    from config.firebase_init import db
-    call_ref = db.collection('calls').document(call_id)
-    call_doc = call_ref.get()
+    # Get call from MongoDB
+    call_data = await MongoDBService.get_call(call_id)
     
-    if not call_doc.exists:
+    if not call_data:
         raise HTTPException(status_code=404, detail="Call not found")
-    
-    call_data = call_doc.to_dict()
     
     # Security: Check if user owns this call or is admin
     if current_user['role'] != 'admin' and call_data.get('user_id') != current_user['uid']:
