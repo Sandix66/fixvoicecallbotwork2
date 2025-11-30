@@ -23,10 +23,10 @@ class SignalWireService:
                 'StatusCallback': status_callback_url or callback_url,
                 'Record': 'true',
                 'MachineDetection': 'DetectMessageEnd',  # Better AMD - wait for end of voicemail greeting
-                'MachineDetectionTimeout': 10,  # Wait up to 10 seconds (faster than before)
+                'MachineDetectionTimeout': 30,  # Wait up to 30 seconds (RESTORED TO ORIGINAL)
                 'MachineDetectionSpeechThreshold': 2400,  # 2.4 seconds of speech
                 'MachineDetectionSpeechEndThreshold': 1200,  # 1.2 seconds of silence
-                'MachineDetectionSilenceTimeout': 2500,  # 2.5 seconds of silence = human answered (FASTER)
+                'MachineDetectionSilenceTimeout': 5000,  # 5 seconds of silence = human answered (RESTORED TO ORIGINAL)
                 'AsyncAmd': 'false'  # IMPORTANT: Synchronous AMD to prevent race condition
             }
             
