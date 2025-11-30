@@ -1,7 +1,7 @@
 [
   {
     "content": "Copy all files from GitHub repository to /app directory",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Create MongoDB connection and database models (users, calls, signalwire_numbers, payments, provider_config)",
