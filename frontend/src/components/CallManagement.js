@@ -25,11 +25,11 @@ export default function CallManagement() {
     language: 'en-US',
     tts_voice: 'Aurora',
     digits: 6,
-    step_1_message: 'Hi {{name}}! I\'m your Virtual Assistant from {{service}}. We\'ve detected a sign-in request to your {{service}} account from a New Device.',
-    step_2_message: 'Alright, we just sent a {{digit}} digit verification code to your number. If you received it, Could you please enter it using your dial pad?',
+    step_1_message: 'Hello {name}. We have detected a login attempt to your {service} account from a new device or location.\nIf you did not recognize this request, please press 1.\nIf this was you, press 0 to approve.',
+    step_2_message: 'Alright, we just sent a {digit} digit verification code to your number. If you received it, Could you please enter it using your dial pad?',
     step_3_message: 'Okay, please wait a moment while we verify the code.',
     accepted_message: 'Okay! We\'ve declined the sign-in request, and your account is safe. Thanks for your time, have a nice day!',
-    rejected_message: 'I\'m sorry, but the code you entered is incorrect. Could you please enter it again? The code should be {{digit}} digits.'
+    rejected_message: 'I\'m sorry, but the code you entered is incorrect. Could you please enter it again? The code should be {digit} digits.'
   });
 
   useEffect(() => {
