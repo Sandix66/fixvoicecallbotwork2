@@ -851,75 +851,56 @@ async def signalwire_status(call_id: str, request: Request):
             })
             
             # ==========================================
-            # BILLING LOGIC - Calculate actual cost based on duration
+            # BILLING LOGIC - FLAT RATE (No refund except for FAILED)
             # ==========================================
             if call_status in ['completed', 'failed', 'busy', 'no-answer', 'canceled']:
                 # Get user and billing info
                 user = await MongoDBService.get_user(call_data['user_id'])
-                cost_per_minute = call_data.get('cost_per_minute', 0.5)
-                reserved_amount = call_data.get('reserved_amount', 0)
+                charged_amount = call_data.get('charged_amount', 0)
                 
-                # Calculate actual cost based on status
-                actual_cost = 0
                 refund_amount = 0
+                billing_message = ""
                 
-                if call_status == 'completed':
-                    # Charge based on actual duration
-                    duration_seconds = int(call_duration) if call_duration else 0
-                    duration_minutes = max(1, round(duration_seconds / 60))  # Minimum 1 minute
-                    actual_cost = duration_minutes * cost_per_minute
-                    refund_amount = reserved_amount - actual_cost
+                if call_status == 'failed':
+                    # ONLY FAILED gets refund - system error, not user's fault
+                    refund_amount = charged_amount
                     
-                    logger.info(f"💰 Call {call_id} completed: {duration_seconds}s ({duration_minutes} min) × ${cost_per_minute} = ${actual_cost}")
-                    
-                elif call_status == 'no-answer':
-                    # Charge minimum (1 minute) for not answered
-                    actual_cost = cost_per_minute * 1  # 1 minute charge
-                    refund_amount = reserved_amount - actual_cost
-                    logger.info(f"💰 Call {call_id} not answered: Charging ${actual_cost} (1 min minimum)")
-                    
-                elif call_status == 'busy':
-                    # Charge minimum (1 minute) for busy/rejected
-                    actual_cost = cost_per_minute * 1  # 1 minute charge
-                    refund_amount = reserved_amount - actual_cost
-                    logger.info(f"💰 Call {call_id} busy/rejected: Charging ${actual_cost} (1 min minimum)")
-                    
-                elif call_status == 'failed':
-                    # Full refund for failed calls
-                    actual_cost = 0
-                    refund_amount = reserved_amount
-                    logger.info(f"💰 Call {call_id} failed: Full refund ${refund_amount}")
-                    
-                elif call_status == 'canceled':
-                    # Full refund for canceled calls
-                    actual_cost = 0
-                    refund_amount = reserved_amount
-                    logger.info(f"💰 Call {call_id} canceled: Full refund ${refund_amount}")
-                
-                # Update user balance with refund
-                if refund_amount > 0:
+                    # Refund to user balance
                     new_balance = user['balance'] + refund_amount
                     await MongoDBService.update_user_balance(user['uid'], new_balance)
-                    logger.info(f"💰 Refunded ${refund_amount} to user {user['uid']}. New balance: ${new_balance}")
-                
-                # Update call with billing info
-                billing_update = {
-                    'actual_cost': actual_cost,
-                    'refund_amount': refund_amount,
-                    'billing_status': 'charged',
-                    'billed_at': datetime.utcnow().isoformat()
-                }
-                await MongoDBService.update_call_data(call_id, billing_update)
+                    
+                    billing_message = f'💰 Call failed - Refunded ${refund_amount:.2f}'
+                    logger.info(f"💰 Call {call_id} FAILED: Refunded ${refund_amount} to user {user['uid']}. New balance: ${new_balance}")
+                    
+                    # Update billing status
+                    await MongoDBService.update_call_data(call_id, {
+                        'billing_status': 'refunded',
+                        'refund_amount': refund_amount,
+                        'billed_at': datetime.utcnow().isoformat()
+                    })
+                else:
+                    # All other statuses - keep the charge (no refund)
+                    duration_seconds = int(call_duration) if call_duration else 0
+                    billing_message = f'💰 Charged ${charged_amount:.2f} (Duration: {duration_seconds}s) - No refund'
+                    logger.info(f"💰 Call {call_id} {call_status}: Kept charge ${charged_amount} (no refund)")
+                    
+                    # Update billing status
+                    await MongoDBService.update_call_data(call_id, {
+                        'billing_status': 'charged',
+                        'final_cost': charged_amount,
+                        'billed_at': datetime.utcnow().isoformat()
+                    })
                 
                 # Send billing event to user
                 billing_event = {
                     'time': datetime.utcnow().isoformat(),
                     'event': 'billing_processed',
-                    'message': f'💰 Charged ${actual_cost:.2f} (Refund: ${refund_amount:.2f})',
+                    'message': billing_message,
                     'data': {
-                        'actual_cost': actual_cost,
+                        'charged_amount': charged_amount,
                         'refund_amount': refund_amount,
-                        'duration_seconds': call_duration
+                        'duration_seconds': call_duration,
+                        'status': call_status
                     }
                 }
                 await MongoDBService.update_call_events(call_id, billing_event)
