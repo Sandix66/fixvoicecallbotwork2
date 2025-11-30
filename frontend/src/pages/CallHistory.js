@@ -228,18 +228,52 @@ export default function CallHistory() {
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Recording URL:</p>
                     {selectedCall.recording_url ? (
-                      <div className="flex items-center gap-2">
-                        <p className="text-white text-sm truncate flex-1">{selectedCall.recording_url}</p>
-                        <Button
-                          size="sm"
-                          className="btn-secondary"
-                          onClick={() => window.open(selectedCall.recording_url, '_blank')}
-                        >
-                          <Download className="w-3 h-3" />
-                        </Button>
+                      <div className="space-y-3">
+                        {/* Audio Player */}
+                        <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-2 border-purple-500/50 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xl">🎙️</span>
+                            <span className="text-purple-300 font-semibold text-sm">Call Recording</span>
+                          </div>
+                          <audio 
+                            controls 
+                            className="w-full"
+                            style={{
+                              height: '40px',
+                              backgroundColor: '#1a1a1a',
+                              borderRadius: '8px'
+                            }}
+                          >
+                            <source src={selectedCall.recording_url} type="audio/mpeg" />
+                            <source src={selectedCall.recording_url} type="audio/wav" />
+                            Your browser does not support the audio element.
+                          </audio>
+                        </div>
+                        {/* Download Links */}
+                        <div className="flex items-center gap-3 text-xs">
+                          <a 
+                            href={selectedCall.recording_url} 
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 underline flex items-center gap-1"
+                          >
+                            <Download className="w-3 h-3" />
+                            Download Recording
+                          </a>
+                          <span className="text-gray-600">•</span>
+                          <a 
+                            href={selectedCall.recording_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 underline"
+                          >
+                            🔗 Open in New Tab
+                          </a>
+                        </div>
                       </div>
                     ) : (
-                      <p className="text-gray-500 text-sm">-</p>
+                      <p className="text-gray-500 text-sm">Recording not available yet</p>
                     )}
                   </div>
                   <div>
