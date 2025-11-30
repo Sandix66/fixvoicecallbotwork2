@@ -4,6 +4,7 @@ from services.mongodb_service import MongoDBService
 from services.signalwire_service import SignalWireService
 from services.telegram_service import TelegramService
 from services.websocket_manager import manager
+from services.deepgram_service import DeepgramService
 from datetime import datetime
 import logging
 import json
@@ -14,6 +15,7 @@ router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 
 signalwire = SignalWireService()
 telegram = TelegramService()
+deepgram = DeepgramService()
 
 # Import active_calls from calls route (in production use shared storage)
 from routes.calls import active_calls
