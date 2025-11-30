@@ -21,11 +21,11 @@
   },
   {
     "content": "Update all routes to use MongoDB instead of Firebase (auth, users, calls, webhooks, admin, payments)",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Seed initial admin user and SignalWire configuration in MongoDB",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Update frontend to use JWT authentication (replace Firebase client)",
