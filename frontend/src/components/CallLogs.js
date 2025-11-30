@@ -91,18 +91,35 @@ export default function CallLogs({ events, activeCall }) {
 
   const getEventIcon = (eventType) => {
     const type = eventType?.toLowerCase() || '';
+    
+    // Call status icons
     if (type.includes('initiated') || type.includes('call_initiated')) return '📱';
     if (type.includes('ringing')) return '📞';
-    if (type.includes('answered')) return '☎️';
-    if (type.includes('human')) return '🙋';
-    if (type.includes('machine') || type.includes('voicemail')) return '🤖';
-    if (type.includes('message') || type.includes('played')) return '🔊';
-    if (type.includes('input') || type.includes('pressed')) return '🔢';
-    if (type.includes('otp') || type.includes('code')) return '🕵️';
+    if (type.includes('answered') || type.includes('in-progress')) return '☎️';
     if (type.includes('completed')) return '🏁';
+    
+    // AMD Detection icons
+    if (type.includes('human_detected')) return '🙋';
+    if (type.includes('silent') && type.includes('human')) return '🔇';
+    if (type.includes('voicemail') || type.includes('machine')) return '🤖';
+    
+    // Call failure/rejection icons
+    if (type.includes('not_answered') || type.includes('no-answer') || type.includes('no_answer')) return '📵';
+    if (type.includes('failed')) return '❌';
+    if (type.includes('rejected') || type.includes('busy')) return '📞';
+    if (type.includes('canceled')) return '🚫';
+    
+    // Interaction icons
+    if (type.includes('message') || type.includes('played')) return '🔊';
+    if (type.includes('pressed') || type.includes('input')) return '🔢';
+    if (type.includes('send') && type.includes('otp')) return '🚀';
+    if (type.includes('otp') || type.includes('code')) return '🕵️';
+    
+    // Other icons
     if (type.includes('carrier')) return '📡';
     if (type.includes('service')) return '🔵';
-    if (type.includes('send')) return '🚀';
+    if (type.includes('fax')) return '📠';
+    
     return '📋';
   };
 
