@@ -65,7 +65,7 @@ async def start_call(call_data: CallCreate, current_user: dict = Depends(verify_
             'digits': call_data.digits
         }
         
-        call_log = await FirebaseService.create_call_log(call_log)
+        call_log = await MongoDBService.create_call_log(call_log)
         call_id = call_log['call_id']
         
         # Store call data
@@ -113,7 +113,7 @@ async def start_call(call_data: CallCreate, current_user: dict = Depends(verify_
             'data': {'call_id': call_id}
         }
         
-        await FirebaseService.update_call_events(call_id, event)
+        await MongoDBService.update_call_events(call_id, event)
         await manager.send_to_user(current_user['uid'], {
             'type': 'call_event',
             'call_id': call_id,
@@ -138,9 +138,9 @@ async def start_call(call_data: CallCreate, current_user: dict = Depends(verify_
 async def get_call_history(current_user: dict = Depends(verify_token)):
     """Get user's call history"""
     if current_user['role'] == 'admin':
-        calls = await FirebaseService.get_all_calls()
+        calls = await MongoDBService.get_all_calls()
     else:
-        calls = await FirebaseService.get_user_calls(current_user['uid'])
+        calls = await MongoDBService.get_user_calls(current_user['uid'])
     
     return [CallResponse(**call) for call in calls]
 
@@ -187,7 +187,7 @@ async def control_call(call_id: str, control: CallControl, current_user: dict = 
         'data': {'action': control.action, 'message': control.message}
     }
     
-    await FirebaseService.update_call_events(call_id, event)
+    await MongoDBService.update_call_events(call_id, event)
     
     # Update call status
     call_ref.update({'status': control.action})
@@ -239,7 +239,7 @@ async def hangup_call(call_id: str, current_user: dict = Depends(verify_token)):
             'data': {'call_id': call_id, 'terminated_by': 'user'}
         }
         
-        await FirebaseService.update_call_events(call_id, event)
+        await MongoDBService.update_call_events(call_id, event)
         await manager.send_to_user(call_data['user_id'], {
             'type': 'call_event',
             'call_id': call_id,
@@ -302,7 +302,7 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
             'sip_port': int(os.getenv('INFOBIP_SIP_PORT', '5061'))
         }
         
-        call_log = await FirebaseService.create_call_log(call_log)
+        call_log = await MongoDBService.create_call_log(call_log)
         call_id = call_log['call_id']
         active_calls[call_id] = call_log
         
