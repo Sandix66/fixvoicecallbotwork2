@@ -166,7 +166,7 @@ class CallBotAPITester:
         success, response = self.run_test(
             "SignalWire Configuration",
             "GET",
-            "admin/signalwire/config",
+            "admin/signalwire/credentials",
             200
         )
         
