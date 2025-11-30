@@ -56,7 +56,7 @@ Sistem sekarang menggunakan **external webhook** (ngrok + PHP) untuk handle Sign
 ### Internal Endpoints (Optional):
 
 ```
-POST https://callbot-research.preview.emergentagent.com/api/webhooks/external/update/{call_id}
+POST https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/update/{call_id}
 ```
 - Receives updates from PHP webhooks
 - Updates Firestore
@@ -189,7 +189,7 @@ if ($digits && $call_id) {
     ];
     
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://callbot-research.preview.emergentagent.com/api/webhooks/external/update/" . $call_id);
+    curl_setopt($ch, CURLOPT_URL, "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/update/" . $call_id);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
@@ -267,7 +267,7 @@ Should return TwiML XML.
 ### Test Internal Update Endpoint:
 
 ```bash
-curl -X POST "https://callbot-research.preview.emergentagent.com/api/webhooks/external/update/test123" \
+curl -X POST "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/update/test123" \
   -H "Content-Type: application/json" \
   -d '{"event":"test","status":"testing","message":"Hello"}'
 ```

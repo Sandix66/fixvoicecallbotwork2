@@ -57,7 +57,7 @@ python create_admin.py
 
 1. Buka browser dan akses:
    ```
-   https://callbot-research.preview.emergentagent.com
+   https://lanjutkan-ini.preview.emergentagent.com
    ```
 
 2. Login dengan credentials:

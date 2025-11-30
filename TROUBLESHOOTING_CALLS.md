@@ -63,8 +63,8 @@ python check_calls.py
    - US numbers biasanya lebih reliable untuk testing
 
 2. **Webhook URL Tidak Reachable**
-   - Check: Pastikan URL `https://callbot-research.preview.emergentagent.com` accessible
-   - Test: `curl https://callbot-research.preview.emergentagent.com/api/health`
+   - Check: Pastikan URL `https://lanjutkan-ini.preview.emergentagent.com` accessible
+   - Test: `curl https://lanjutkan-ini.preview.emergentagent.com/api/health`
 
 3. **TwiML Format Error**
    - Check logs: `tail -f /var/log/supervisor/backend.err.log`
@@ -169,7 +169,7 @@ db.collection('calls').document('call_id_here').delete()
 
 ### Fix 3: Verify Webhook URL
 ```bash
-curl -X POST https://callbot-research.preview.emergentagent.com/api/webhooks/signalwire/test \
+curl -X POST https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/signalwire/test \
   -d "CallStatus=initiated"
 ```
 

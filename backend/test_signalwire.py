@@ -72,7 +72,7 @@ async def test_signalwire():
     
     print(f"   From: {test_from}")
     print(f"   To: {test_to}")
-    print(f"   Callback: https://callbot-research.preview.emergentagent.com/api/webhooks/signalwire/test")
+    print(f"   Callback: https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/signalwire/test")
     
     try:
         async with httpx.AsyncClient() as client:
@@ -82,8 +82,8 @@ async def test_signalwire():
                 data={
                     'From': test_from,
                     'To': test_to,
-                    'Url': 'https://callbot-research.preview.emergentagent.com/api/webhooks/signalwire/test',
-                    'StatusCallback': 'https://callbot-research.preview.emergentagent.com/api/webhooks/signalwire/test/status'
+                    'Url': 'https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/signalwire/test',
+                    'StatusCallback': 'https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/signalwire/test/status'
                 },
                 timeout=10.0
             )

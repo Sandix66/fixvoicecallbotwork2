@@ -55,7 +55,7 @@ Sebelum menggunakan sistem, Anda harus mengaktifkan Firebase Authentication di F
 FIREBASE_PROJECT_ID=clankk-e61f8
 
 # SignalWire
-SIGNALWIRE_PROJECT_ID=bf825aef-aa0a-402f-a908-2d1c54733518
+SIGNALWIRE_PROJECT_ID=lanjutkan-ini
 SIGNALWIRE_SPACE_URL=marauang-rauang.signalwire.com
 SIGNALWIRE_TOKEN=PTf3a107d98daf47a94fee499d736507ec38b7281a3a375b66
 
@@ -70,7 +70,7 @@ CALL_COST_PER_MINUTE=0.5
 
 ### Frontend (.env)
 ```env
-REACT_APP_BACKEND_URL=https://callbot-research.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://lanjutkan-ini.preview.emergentagent.com
 ```
 
 ---
@@ -232,12 +232,12 @@ REACT_APP_BACKEND_URL=https://callbot-research.preview.emergentagent.com
 
 ### Backend API Test
 ```bash
-curl https://callbot-research.preview.emergentagent.com/api/health
+curl https://lanjutkan-ini.preview.emergentagent.com/api/health
 ```
 
 ### Login Test (After Firebase Auth is enabled)
 ```bash
-curl -X POST https://callbot-research.preview.emergentagent.com/api/auth/login \
+curl -X POST https://lanjutkan-ini.preview.emergentagent.com/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@callbot.com","password":"admin123"}'
 ```

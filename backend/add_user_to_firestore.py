@@ -44,7 +44,7 @@ def add_to_firestore():
         print(f"🔑 Password: admin123")
         print(f"💰 Initial Balance: $1000.00")
         print(f"\nℹ️  You can now login at:")
-        print(f"   https://callbot-research.preview.emergentagent.com")
+        print(f"   https://lanjutkan-ini.preview.emergentagent.com")
         
     except auth.UserNotFoundError:
         print(f"❌ User not found in Firebase Auth")

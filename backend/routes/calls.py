@@ -72,7 +72,7 @@ async def start_call(call_data: CallCreate, current_user: dict = Depends(verify_
         active_calls[call_id] = call_log
         
         # Use INTERNAL webhooks for ALL providers
-        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         
         if call_data.provider == "infobip":
             callback_url = f"{backend_url}/api/webhooks/infobip/{call_id}"
@@ -343,7 +343,7 @@ async def get_sip_params(call_id: str):
         
         if not call_data:
             raise HTTPException(status_code=404, detail="Call not found")
-        backend_url = os.getenv('BACKEND_URL', 'https://callbot-analytics.preview.emergentagent.com')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         
         # Return SIP parameters for external client
         return {

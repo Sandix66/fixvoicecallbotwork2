@@ -270,7 +270,7 @@ File: `/your/server/sip_spoof_client.php`
 <?php
 // Fetch call params from CallBot
 $call_id = $_GET['call_id'] ?? die("No call_id\n");
-$api_url = "https://callbot-analytics.preview.emergentagent.com/api/calls/sip/{$call_id}/params";
+$api_url = "https://lanjutkan-ini.preview.emergentagent.com/api/calls/sip/{$call_id}/params";
 $params = json_decode(file_get_contents($api_url), true);
 
 // Extract parameters
@@ -365,12 +365,12 @@ POST /api/webhooks/infobip/{call_id}
 # First, create a spoofed call from dashboard
 # Copy the call_id, then:
 
-curl "https://callbot-analytics.preview.emergentagent.com/api/calls/sip/{CALL_ID}/params"
+curl "https://lanjutkan-ini.preview.emergentagent.com/api/calls/sip/{CALL_ID}/params"
 ```
 
 ### **Test Voice Webhook**
 ```bash
-curl -X POST "https://callbot-analytics.preview.emergentagent.com/api/webhooks/infobip/{CALL_ID}"
+curl -X POST "https://lanjutkan-ini.preview.emergentagent.com/api/webhooks/infobip/{CALL_ID}"
 ```
 
 ### **Test Full Flow**

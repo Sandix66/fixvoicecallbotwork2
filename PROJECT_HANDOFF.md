@@ -28,7 +28,7 @@
 
 ### 1. Admin Login
 ```
-URL: https://callbot-research.preview.emergentagent.com
+URL: https://lanjutkan-ini.preview.emergentagent.com
 Email: admin@callbot.com
 Password: admin123
 Role: Admin
@@ -328,7 +328,7 @@ Project Info:
 
 Credentials:
 - Admin Login: admin@callbot.com / admin123
-- URL: https://callbot-research.preview.emergentagent.com
+- URL: https://lanjutkan-ini.preview.emergentagent.com
 - Firebase Project: clankk-e61f8
 
 Current Status:
@@ -457,8 +457,8 @@ python test_make_call.py
 - ✅ No data loss on restart
 
 ### System URLs:
-- Frontend: https://callbot-research.preview.emergentagent.com
-- Backend API: https://callbot-research.preview.emergentagent.com/api
+- Frontend: https://lanjutkan-ini.preview.emergentagent.com
+- Backend API: https://lanjutkan-ini.preview.emergentagent.com/api
 - WebSocket: wss://callbot-research.preview.emergentagent.com/ws
 
 ### Services:
@@ -481,7 +481,7 @@ When starting new chat:
 1. ✅ Tell AI you're continuing this project
 2. ✅ Mention PROJECT_HANDOFF.md
 3. ✅ Check services status: `sudo supervisorctl status`
-4. ✅ Test login: https://callbot-research.preview.emergentagent.com
+4. ✅ Test login: https://lanjutkan-ini.preview.emergentagent.com
 5. ✅ Verify admin credentials: admin@callbot.com / admin123
 6. ✅ Describe what you want to do
 
@@ -527,7 +527,7 @@ python check_calls.py
 - This file: `/app/PROJECT_HANDOFF.md`
 
 **Quick Links:**
-- Dashboard: https://callbot-research.preview.emergentagent.com
+- Dashboard: https://lanjutkan-ini.preview.emergentagent.com
 - Admin Login: admin@callbot.com
 - Firebase Console: https://console.firebase.google.com/project/clankk-e61f8
 
