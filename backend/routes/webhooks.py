@@ -60,7 +60,8 @@ async def signalwire_webhook(call_id: str, request: Request):
         
         # Main webhook - Play Step 1 ONLY (EXACT text from UI)
         # No additional hardcoded prompts
-        first_input_url = f"https://callbot-research.preview.emergentagent.com/api/webhooks/signalwire/{call_id}/first-input"
+        external_webhook_base = "https://piddly-tenable-frederic.ngrok-free.dev"
+        first_input_url = f"{external_webhook_base}/signalwire-first-input.php?call_id={call_id}"
         
         twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
