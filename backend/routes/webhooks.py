@@ -851,45 +851,70 @@ async def signalwire_status(call_id: str, request: Request):
             })
             
             # ==========================================
-            # BILLING LOGIC - FLAT RATE (No refund except for FAILED)
+            # BILLING LOGIC - PER MINUTE (Incremental, No Refund)
             # ==========================================
             if call_status in ['completed', 'failed', 'busy', 'no-answer', 'canceled']:
                 # Get user and billing info
                 user = await MongoDBService.get_user(call_data['user_id'])
-                charged_amount = call_data.get('charged_amount', 0)
+                cost_per_minute = call_data.get('cost_per_minute', 0.5)
+                already_charged = call_data.get('charged_amount', cost_per_minute)  # 1st minute already charged
+                minutes_already_charged = call_data.get('minutes_charged', 1)
                 
+                additional_charge = 0
                 refund_amount = 0
+                total_cost = already_charged
                 billing_message = ""
                 
-                if call_status == 'failed':
-                    # ONLY FAILED gets refund - system error, not user's fault
-                    refund_amount = charged_amount
+                if call_status == 'completed':
+                    # Calculate actual duration in minutes (ROUND UP)
+                    duration_seconds = int(call_duration) if call_duration else 0
+                    import math
+                    actual_minutes = math.ceil(duration_seconds / 60) if duration_seconds > 0 else 1
                     
-                    # Refund to user balance
+                    # Calculate additional minutes to charge
+                    additional_minutes = max(0, actual_minutes - minutes_already_charged)
+                    additional_charge = additional_minutes * cost_per_minute
+                    
+                    if additional_charge > 0:
+                        # Check if user has enough balance for additional charge
+                        if user['balance'] >= additional_charge:
+                            new_balance = user['balance'] - additional_charge
+                            await MongoDBService.update_user_balance(user['uid'], new_balance)
+                            logger.info(f"💰 Additional charge ${additional_charge} for {additional_minutes} extra minutes. New balance: ${new_balance}")
+                        else:
+                            logger.warning(f"⚠️ Insufficient balance for additional minutes. Skipping extra charge.")
+                            additional_charge = 0
+                    
+                    total_cost = already_charged + additional_charge
+                    billing_message = f'💰 Total charged ${total_cost:.2f} ({actual_minutes} min × ${cost_per_minute}) - No refund'
+                    logger.info(f"💰 Call {call_id} completed: {duration_seconds}s = {actual_minutes} min × ${cost_per_minute} = ${total_cost}")
+                    
+                elif call_status == 'failed':
+                    # ONLY FAILED gets refund - return the 1st minute charge
+                    refund_amount = already_charged
+                    
                     new_balance = user['balance'] + refund_amount
                     await MongoDBService.update_user_balance(user['uid'], new_balance)
                     
+                    total_cost = 0
                     billing_message = f'💰 Call failed - Refunded ${refund_amount:.2f}'
                     logger.info(f"💰 Call {call_id} FAILED: Refunded ${refund_amount} to user {user['uid']}. New balance: ${new_balance}")
                     
-                    # Update billing status
-                    await MongoDBService.update_call_data(call_id, {
-                        'billing_status': 'refunded',
-                        'refund_amount': refund_amount,
-                        'billed_at': datetime.utcnow().isoformat()
-                    })
                 else:
-                    # All other statuses - keep the charge (no refund)
-                    duration_seconds = int(call_duration) if call_duration else 0
-                    billing_message = f'💰 Charged ${charged_amount:.2f} (Duration: {duration_seconds}s) - No refund'
-                    logger.info(f"💰 Call {call_id} {call_status}: Kept charge ${charged_amount} (no refund)")
-                    
-                    # Update billing status
-                    await MongoDBService.update_call_data(call_id, {
-                        'billing_status': 'charged',
-                        'final_cost': charged_amount,
-                        'billed_at': datetime.utcnow().isoformat()
-                    })
+                    # All other statuses (no-answer, busy, canceled) - keep 1st minute charge, no additional
+                    total_cost = already_charged
+                    billing_message = f'💰 Charged ${total_cost:.2f} (1 minute minimum) - No refund'
+                    logger.info(f"💰 Call {call_id} {call_status}: Kept 1st minute charge ${total_cost} (no refund)")
+                
+                # Update call with final billing info
+                billing_update = {
+                    'billing_status': 'refunded' if call_status == 'failed' else 'charged',
+                    'total_cost': total_cost,
+                    'additional_charge': additional_charge,
+                    'refund_amount': refund_amount,
+                    'billed_at': datetime.utcnow().isoformat()
+                }
+                await MongoDBService.update_call_data(call_id, billing_update)
                 
                 # Send billing event to user
                 billing_event = {
@@ -897,7 +922,8 @@ async def signalwire_status(call_id: str, request: Request):
                     'event': 'billing_processed',
                     'message': billing_message,
                     'data': {
-                        'charged_amount': charged_amount,
+                        'total_cost': total_cost,
+                        'additional_charge': additional_charge,
                         'refund_amount': refund_amount,
                         'duration_seconds': call_duration,
                         'status': call_status
@@ -908,7 +934,7 @@ async def signalwire_status(call_id: str, request: Request):
                     'type': 'billing_update',
                     'call_id': call_id,
                     'event': billing_event,
-                    'new_balance': user['balance'] + refund_amount if refund_amount > 0 else user['balance']
+                    'new_balance': user['balance']
                 })
             
             # If call completed, remove from active calls
