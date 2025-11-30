@@ -71,3 +71,28 @@ async def get_available_numbers():
     """Get available SignalWire numbers (public endpoint for users)"""
     numbers = await MongoDBService.get_available_numbers()
     return [{'phone_number': num['phone_number']} for num in numbers]
+
+@router.put("/users/{uid}/spoofing-permission")
+async def update_spoofing_permission(uid: str, permission: dict, current_user: dict = Depends(verify_admin)):
+    """Admin can enable/disable spoofing permission for a user"""
+    try:
+        can_use = permission.get('can_use_spoofing', False)
+        
+        # Update user spoofing permission
+        result = await MongoDBService.update_user(uid, {'can_use_spoofing': can_use})
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        logger.info(f"Admin {current_user['uid']} updated spoofing permission for user {uid}: {can_use}")
+        
+        return {
+            "message": f"Spoofing permission {'enabled' if can_use else 'disabled'} for user",
+            "uid": uid,
+            "can_use_spoofing": can_use
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating spoofing permission: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update permission")
