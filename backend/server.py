@@ -9,8 +9,8 @@ import logging
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# Initialize Firebase
-from config.firebase_init import db, firebase_app
+# Initialize MongoDB
+from config.mongodb_init import init_db, close_db
 
 # Import routes
 from routes import auth, users, calls, webhooks, admin, payments
@@ -34,6 +34,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Startup event
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup"""
+    await init_db()
+    logger.info("MongoDB initialized successfully")
+
+# Shutdown event
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Close database connection on shutdown"""
+    await close_db()
+    logger.info("MongoDB connection closed")
 
 # Include routers with /api prefix
 app.include_router(auth.router, prefix="/api")
@@ -64,7 +78,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
 # Health check
 @app.get("/api/health")
 async def health_check():
-    return {"status": "healthy", "firebase": "connected"}
+    return {"status": "healthy", "database": "mongodb"}
 
 if __name__ == "__main__":
     import uvicorn
