@@ -66,6 +66,11 @@ export default function CallManagement() {
       // Set active call
       setActiveCall(response.data);
       
+      // Show live monitor
+      setMonitorCallId(response.data.call_id);
+      setMonitorCallData(formData);
+      setShowLiveMonitor(true);
+      
       // Add to live events
       setLiveEvents(prev => [{
         event: 'Call Initiated',
