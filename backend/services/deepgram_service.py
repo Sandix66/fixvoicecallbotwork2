@@ -35,30 +35,39 @@ class DeepgramService:
             raise Exception("Deepgram client not initialized - API key missing")
         
         try:
-            logger.info(f"Generating Deepgram TTS: voice={voice}, text_length={len(text)}")
+            logger.info(f"🎙️ Generating Deepgram TTS: voice={voice}, text_length={len(text)}")
             
-            # Configure speech options
-            options = SpeakOptions(
-                model=voice,
-            )
-            
-            # Generate speech
-            response = self.client.speak.v("1").save(
-                os.path.join(self.audio_dir, f"temp_{uuid.uuid4()}.mp3"),
-                {"text": text},
-                options
-            )
-            
-            # Get audio data
-            audio_data = response
-            
-            # Save to file
+            # Generate unique audio ID
             audio_id = str(uuid.uuid4())
             filename = os.path.join(self.audio_dir, f"{audio_id}.mp3")
             
-            # Write audio to file
-            with open(filename, 'wb') as f:
-                f.write(audio_data)
+            # Use REST API directly for better control
+            async with httpx.AsyncClient() as client:
+                headers = {
+                    "Authorization": f"Token {self.api_key}",
+                    "Content-Type": "application/json"
+                }
+                
+                payload = {
+                    "text": text
+                }
+                
+                response = await client.post(
+                    f"https://api.deepgram.com/v1/speak?model={voice}",
+                    headers=headers,
+                    json=payload,
+                    timeout=30.0
+                )
+                
+                if response.status_code != 200:
+                    raise Exception(f"Deepgram API error: {response.status_code} - {response.text}")
+                
+                # Save audio data
+                audio_data = response.content
+                with open(filename, 'wb') as f:
+                    f.write(audio_data)
+                
+                logger.info(f"✅ Audio saved: {filename} ({len(audio_data)} bytes)")
             
             # Return accessible URL
             backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
@@ -68,7 +77,7 @@ class DeepgramService:
             return audio_url
             
         except Exception as e:
-            logger.error(f"Error generating Deepgram TTS: {e}")
+            logger.error(f"❌ Error generating Deepgram TTS: {e}")
             raise
     
     def is_deepgram_voice(self, voice: str) -> bool:
