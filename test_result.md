@@ -242,3 +242,7 @@ agent_communication:
     message: "UI/UX Modification completed for CallLogs component. Changed section title to 'LIVE EVENTS', removed Card Type/Bank Name/Card Ending fields, reorganized data display structure. Updated backend CallResponse schema to include language, tts_voice, digits, otp_entered, and user_response fields."
   - agent: "main"
     message: "Files Modified: (1) /app/frontend/src/components/CallLogs.js - Updated UI structure and data mapping, (2) /app/backend/models/schemas.py - Added missing fields to CallResponse schema. Both backend and frontend auto-reloaded successfully."
+  - agent: "main"
+    message: "BUG FIX: First call not reaching target. ROOT CAUSE: (1) Race condition between call creation and webhook callback, (2) AMD (Answering Machine Detection) causing delays. SOLUTION: (1) Added retry mechanism with 500ms wait in webhook handler if call not found, (2) Added 200ms verification delay in call creation, (3) Changed AMD from 'Enable' to 'DetectMessageEnd' with proper thresholds and AsyncAmd=false to prevent race conditions."
+  - agent: "main"
+    message: "Fixed Files: (1) /app/backend/routes/webhooks.py - Added asyncio sleep retry for race condition, (2) /app/backend/routes/calls.py - Added call verification after creation, (3) /app/backend/services/signalwire_service.py - Improved AMD configuration with proper thresholds. These fixes should resolve the issue where first call doesn't reach target but second call works."
