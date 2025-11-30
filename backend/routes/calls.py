@@ -341,14 +341,10 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
 async def get_sip_params(call_id: str):
     """Get SIP parameters for external SIP client to make spoofed call"""
     try:
-        from config.firebase_init import db
-        call_ref = db.collection('calls').document(call_id)
-        call_doc = call_ref.get()
+        call_data = await MongoDBService.get_call(call_id)
         
-        if not call_doc.exists:
+        if not call_data:
             raise HTTPException(status_code=404, detail="Call not found")
-        
-        call_data = call_doc.to_dict()
         backend_url = os.getenv('BACKEND_URL', 'https://callbot-analytics.preview.emergentagent.com')
         
         # Return SIP parameters for external client
