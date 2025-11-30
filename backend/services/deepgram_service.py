@@ -11,9 +11,6 @@ class DeepgramService:
         self.api_key = os.getenv('DEEPGRAM_API_KEY')
         if not self.api_key:
             logger.warning("Deepgram API key not configured")
-            self.client = None
-        else:
-            self.client = DeepgramClient(self.api_key)
         
         # Temporary storage for audio files
         self.audio_dir = "/tmp/deepgram_audio"
