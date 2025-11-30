@@ -10,7 +10,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="App">
+        <div className="dark bg-[#0a0a0a] min-h-screen text-white">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
