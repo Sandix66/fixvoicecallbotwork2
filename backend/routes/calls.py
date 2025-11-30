@@ -74,12 +74,10 @@ async def start_call(call_data: CallCreate, current_user: dict = Depends(verify_
             'accepted_message': accepted_message,
             'rejected_message': rejected_message,
             'digits': call_data.digits,
-            # Billing info
-            'cost_per_minute': cost_per_minute,
-            'estimated_cost': estimated_cost,
-            'reserved_amount': estimated_cost,
-            'actual_cost': 0,
-            'billing_status': 'reserved'  # reserved, charged, refunded
+            # Billing info - FLAT RATE
+            'flat_cost_per_call': flat_cost_per_call,
+            'charged_amount': flat_cost_per_call,
+            'billing_status': 'charged'  # Immediately charged, no reserve
         }
         
         call_log = await MongoDBService.create_call_log(call_log)
