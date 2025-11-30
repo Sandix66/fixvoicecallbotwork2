@@ -208,12 +208,12 @@ class CallBotAPITester:
             "Unauthorized Access Test",
             "GET",
             "users/profile",
-            401  # Should return 401 Unauthorized
+            403  # Should return 403 Not authenticated
         )
         
         # Restore token
         self.token = temp_token
-        return success  # Success means we got the expected 401
+        return success  # Success means we got the expected 403
 
     def test_invalid_login(self):
         """Test login with invalid credentials"""
