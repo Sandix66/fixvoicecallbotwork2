@@ -37,6 +37,6 @@
   },
   {
     "content": "Test all features with Testing Agent (auth, calls, webhooks, real-time updates)",
-    "status": "in_progress"
+    "status": "completed"
   }
 ]
