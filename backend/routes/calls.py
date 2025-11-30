@@ -306,10 +306,8 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
                 response = await client.get(trigger_url)
                 if response.status_code == 200:
                     logger.info(f"External SIP client triggered successfully for {call_id}")
-                    # Update call status in Firebase
-                    from config.firebase_init import db
-                    call_ref = db.collection('calls').document(call_id)
-                    call_ref.update({'status': 'initiated'})
+                    # Update call status in MongoDB
+                    await MongoDBService.update_call_status(call_id, 'initiated')
                 else:
                     logger.warning(f"Failed to trigger external SIP client: {response.status_code}")
         except Exception as e:
