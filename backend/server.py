@@ -80,6 +80,37 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
 async def health_check():
     return {"status": "healthy", "database": "mongodb"}
 
+# Deepgram audio serving endpoint
+@app.get("/api/audio/deepgram/{audio_id}.mp3")
+async def serve_deepgram_audio(audio_id: str):
+    """Serve Deepgram generated audio files"""
+    from fastapi.responses import FileResponse
+    from services.deepgram_service import DeepgramService
+    
+    try:
+        deepgram = DeepgramService()
+        audio_data = deepgram.get_audio_file(audio_id)
+        
+        # Return audio as streaming response
+        from fastapi.responses import StreamingResponse
+        import io
+        
+        return StreamingResponse(
+            io.BytesIO(audio_data),
+            media_type="audio/mpeg",
+            headers={
+                "Content-Disposition": f"inline; filename={audio_id}.mp3",
+                "Cache-Control": "public, max-age=3600"
+            }
+        )
+    except FileNotFoundError:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Audio file not found")
+    except Exception as e:
+        logger.error(f"Error serving audio: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail="Error serving audio")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
