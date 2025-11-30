@@ -214,9 +214,8 @@ async def hangup_call(call_id: str, current_user: dict = Depends(verify_token)):
             except Exception as e:
                 logger.warning(f"Failed to hangup via SignalWire: {e}")
         
-        # Update call status in Firestore
-        call_ref.update({
-            'status': 'terminated',
+        # Update call status in MongoDB
+        await MongoDBService.update_call_status(call_id, 'terminated', {
             'ended_at': datetime.utcnow().isoformat()
         })
         
