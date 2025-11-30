@@ -184,10 +184,25 @@ export default function CallManagement() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Aurora">Aurora</SelectItem>
-                      <SelectItem value="Chirp-HD-0">Chirp HD</SelectItem>
-                      <SelectItem value="woman">Woman</SelectItem>
-                      <SelectItem value="man">Man</SelectItem>
+                      <SelectItem value="Aurora">Aurora (SignalWire)</SelectItem>
+                      <SelectItem value="Chirp-HD-0">Chirp HD (SignalWire)</SelectItem>
+                      <SelectItem value="woman">Woman (SignalWire)</SelectItem>
+                      <SelectItem value="man">Man (SignalWire)</SelectItem>
+                      
+                      {/* Deepgram Aura 2 Voices */}
+                      <SelectItem value="aura-2-stella-en">Aura 2 - Stella (Deepgram)</SelectItem>
+                      <SelectItem value="aura-2-orion-en">Aura 2 - Orion (Deepgram)</SelectItem>
+                      <SelectItem value="aura-2-orpheus-en">Aura 2 - Orpheus (Deepgram)</SelectItem>
+                      <SelectItem value="aura-2-athena-en">Aura 2 - Athena (Deepgram)</SelectItem>
+                      <SelectItem value="aura-2-zeus-en">Aura 2 - Zeus (Deepgram)</SelectItem>
+                      
+                      {/* ElevenLabs Voices */}
+                      <SelectItem value="eleven-jessica">Jessica (ElevenLabs)</SelectItem>
+                      <SelectItem value="eleven-daniel">Daniel (ElevenLabs)</SelectItem>
+                      
+                      {/* Cartesia Voices */}
+                      <SelectItem value="cartesia-helpful-woman">Helpful Woman (Cartesia)</SelectItem>
+                      <SelectItem value="cartesia-kentucky-man">Kentucky Man (Cartesia)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
