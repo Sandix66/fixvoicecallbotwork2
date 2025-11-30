@@ -8,11 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import CallLogs from './CallLogs';
+import LiveCallMonitor from './LiveCallMonitor';
 
 export default function CallManagement() {
   const [loading, setLoading] = useState(false);
   const [liveEvents, setLiveEvents] = useState([]);
   const [activeCall, setActiveCall] = useState(null);
+  const [showLiveMonitor, setShowLiveMonitor] = useState(false);
+  const [monitorCallId, setMonitorCallId] = useState(null);
+  const [monitorCallData, setMonitorCallData] = useState(null);
   const [availableNumbers, setAvailableNumbers] = useState([]);
   const [formData, setFormData] = useState({
     from_number: '',
