@@ -25,11 +25,11 @@
   },
   {
     "content": "Seed initial admin user and SignalWire configuration in MongoDB",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Update frontend to use JWT authentication (replace Firebase client)",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Install required dependencies and restart services",
