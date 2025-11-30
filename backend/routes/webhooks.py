@@ -24,8 +24,9 @@ async def signalwire_webhook(call_id: str, request: Request):
     try:
         form_data = await request.form()
         call_status = form_data.get('CallStatus')
+        answered_by = form_data.get('AnsweredBy', '').lower()
         
-        logger.info(f"SignalWire webhook for call {call_id}: {call_status}")
+        logger.info(f"SignalWire webhook for call {call_id}: {call_status}, AnsweredBy: {answered_by}")
         
         # Get call from MongoDB with retry for race condition
         call_data = await MongoDBService.get_call(call_id)
@@ -65,6 +66,48 @@ async def signalwire_webhook(call_id: str, request: Request):
             'event': event
         })
         
+        # HANDLE AMD (Answering Machine Detection) RESULTS
+        if answered_by:
+            amd_event = None
+            
+            if answered_by == 'human':
+                amd_event = {
+                    'time': datetime.utcnow().isoformat(),
+                    'event': 'human_detected',
+                    'message': '🙋 Human detected',
+                    'data': {'answered_by': answered_by}
+                }
+            elif answered_by in ['machine_start', 'machine_end_beep', 'machine_end_silence']:
+                amd_event = {
+                    'time': datetime.utcnow().isoformat(),
+                    'event': 'voicemail_detected',
+                    'message': '🤖 Voicemail Detected',
+                    'data': {'answered_by': answered_by}
+                }
+            elif answered_by == 'fax':
+                amd_event = {
+                    'time': datetime.utcnow().isoformat(),
+                    'event': 'fax_detected',
+                    'message': '📠 Fax machine detected',
+                    'data': {'answered_by': answered_by}
+                }
+            elif answered_by == 'unknown':
+                amd_event = {
+                    'time': datetime.utcnow().isoformat(),
+                    'event': 'silent_human_detected',
+                    'message': '🔇 Silent Human detection',
+                    'data': {'answered_by': answered_by}
+                }
+            
+            if amd_event:
+                await MongoDBService.update_call_events(call_id, amd_event)
+                await MongoDBService.update_call_field(call_id, 'answered_by', answered_by)
+                await manager.send_to_user(call_data['user_id'], {
+                    'type': 'call_event',
+                    'call_id': call_id,
+                    'event': amd_event
+                })
+        
         # Generate TwiML using EXACT text from UI form
         voice = call_data.get('tts_voice', 'Aurora')
         
@@ -74,9 +117,6 @@ async def signalwire_webhook(call_id: str, request: Request):
         # Main webhook - Play Step 1 Message
         backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         first_input_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/first-input"
-        
-        # Check if human/silent human detected
-        AnsweredBy = form_data.get('AnsweredBy', '').lower()
         
         # Log message played event
         msg_event = {
@@ -90,7 +130,7 @@ async def signalwire_webhook(call_id: str, request: Request):
         # For human/unknown - use longer timeout and allow retry
         retry_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/retry-step1"
         
-        if AnsweredBy in ['human', 'unknown', '']:
+        if answered_by in ['human', 'unknown', '']:
             # Human detected - longer timeout
             twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
