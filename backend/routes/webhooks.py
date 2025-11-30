@@ -243,10 +243,12 @@ async def signalwire_retry_step1(call_id: str):
         # Generate voice element for retry
         voice_element = await generate_voice_element(step_1_message, voice)
         
-        # Second attempt - then give up
+        # Second attempt - play 2x then give up
         twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="15">
+        {voice_element}
+        <Pause length="2"/>
         {voice_element}
     </Gather>
     <Say voice="Aurora">We did not receive any input. Goodbye.</Say>
