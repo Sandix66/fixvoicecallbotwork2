@@ -1,0 +1,42 @@
+[
+  {
+    "content": "Copy all files from GitHub repository to /app directory",
+    "status": "pending"
+  },
+  {
+    "content": "Create MongoDB connection and database models (users, calls, signalwire_numbers, payments, provider_config)",
+    "status": "pending"
+  },
+  {
+    "content": "Create Pydantic models with UUID IDs and timezone-aware datetimes",
+    "status": "pending"
+  },
+  {
+    "content": "Implement JWT-based authentication service (replace Firebase Auth)",
+    "status": "pending"
+  },
+  {
+    "content": "Create MongoDB service layer for CRUD operations",
+    "status": "pending"
+  },
+  {
+    "content": "Update all routes to use MongoDB instead of Firebase (auth, users, calls, webhooks, admin, payments)",
+    "status": "pending"
+  },
+  {
+    "content": "Seed initial admin user and SignalWire configuration in MongoDB",
+    "status": "pending"
+  },
+  {
+    "content": "Update frontend to use JWT authentication (replace Firebase client)",
+    "status": "pending"
+  },
+  {
+    "content": "Install required dependencies and restart services",
+    "status": "pending"
+  },
+  {
+    "content": "Test all features with Testing Agent (auth, calls, webhooks, real-time updates)",
+    "status": "pending"
+  }
+]
