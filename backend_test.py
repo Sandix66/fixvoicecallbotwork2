@@ -421,44 +421,57 @@ class CallBotAPITester:
         return True
 
     def run_all_tests(self):
-        """Run all backend tests"""
-        print("🚀 Starting CallBot Analytics Backend API Tests")
-        print("=" * 60)
+        """Run all backend tests - Focus on bug investigation"""
+        print("🚀 Starting CallBot Research System Backend API Tests")
+        print("🔍 Focus: Data Persistence Bug Investigation")
+        print("=" * 70)
         
         # Basic connectivity tests
-        print("\n📡 CONNECTIVITY TESTS")
+        print("\n📡 PHASE 1: CONNECTIVITY & HEALTH TESTS")
+        print("-" * 70)
         self.test_health_check()
         self.test_root_endpoint()
         
-        # Authentication tests
-        print("\n🔐 AUTHENTICATION TESTS")
+        # Authentication & User Data tests
+        print("\n🔐 PHASE 2: AUTHENTICATION & USER DATA TESTS")
+        print("-" * 70)
         self.test_invalid_login()
         self.test_admin_login()
         self.test_token_verification()
-        self.test_unauthorized_access()
-        
-        # User management tests
-        print("\n👤 USER MANAGEMENT TESTS")
         self.test_user_profile()
+        self.test_user_data_persistence()
+        self.test_unauthorized_access()
         self.test_all_users()
         
-        # SignalWire integration tests
-        print("\n📞 SIGNALWIRE INTEGRATION TESTS")
-        self.test_signalwire_config()
+        # Call Management tests
+        print("\n📞 PHASE 3: CALL MANAGEMENT & DATA PERSISTENCE TESTS")
+        print("-" * 70)
         self.test_signalwire_numbers()
+        self.test_create_call()
+        self.test_get_call_details()
+        self.test_call_history()
+        self.test_database_persistence()
+        
+        # SignalWire integration tests
+        print("\n⚙️  PHASE 4: SIGNALWIRE CONFIGURATION TESTS")
+        print("-" * 70)
+        self.test_signalwire_config()
         
         # Print results
-        print("\n" + "=" * 60)
-        print(f"📊 TEST RESULTS")
+        print("\n" + "=" * 70)
+        print(f"📊 TEST RESULTS SUMMARY")
+        print("=" * 70)
         print(f"Tests Run: {self.tests_run}")
         print(f"Tests Passed: {self.tests_passed}")
+        print(f"Tests Failed: {self.tests_run - self.tests_passed}")
         print(f"Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
         
         if self.tests_passed == self.tests_run:
-            print("🎉 All tests passed!")
+            print("\n🎉 All tests passed! No data persistence issues found.")
             return 0
         else:
-            print(f"❌ {self.tests_run - self.tests_passed} tests failed")
+            print(f"\n❌ {self.tests_run - self.tests_passed} test(s) failed")
+            print("⚠️  Data persistence issues detected - see failed tests above")
             return 1
 
 def main():
