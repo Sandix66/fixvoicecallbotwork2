@@ -33,10 +33,10 @@
   },
   {
     "content": "Install required dependencies and restart services",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Test all features with Testing Agent (auth, calls, webhooks, real-time updates)",
-    "status": "pending"
+    "status": "in_progress"
   }
 ]
