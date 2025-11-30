@@ -472,7 +472,7 @@ async def signalwire_wait(call_id: str):
         admin_decision = call_data.get('admin_decision')
         
         if admin_decision == 'accept':
-            # Play accepted message 2x
+            # Play accepted message 1x (not 2x)
             accepted_message = call_data.get('accepted_message', 'Thank you')
             
             # Generate voice element for Accepted message
@@ -480,8 +480,6 @@ async def signalwire_wait(call_id: str):
             
             twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    {voice_element_accepted}
-    <Pause length="2"/>
     {voice_element_accepted}
     <Hangup/>
 </Response>'''
