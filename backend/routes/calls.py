@@ -363,23 +363,21 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
                 detail="Access denied. You don't have permission to use spoofing feature. Contact admin."
             )
         
-        # Get spoofing cost configuration
-        spoofing_cost_per_minute = float(os.getenv('SPOOFING_COST_PER_MINUTE', '0.8'))
-        estimated_duration_minutes = 5  # Estimate 5 minutes per call
-        estimated_cost = spoofing_cost_per_minute * estimated_duration_minutes
+        # Get spoofing cost configuration - FLAT RATE per call
+        flat_spoofing_cost = float(os.getenv('SPOOFING_COST_PER_MINUTE', '0.8'))
         
-        # Check user balance (need enough for estimated cost)
-        if current_user['balance'] < estimated_cost:
+        # Check user balance (need flat cost)
+        if current_user['balance'] < flat_spoofing_cost:
             raise HTTPException(
                 status_code=402, 
-                detail=f"Insufficient balance. Need at least ${estimated_cost} for estimated {estimated_duration_minutes} minutes spoofing call."
+                detail=f"Insufficient balance. Need ${flat_spoofing_cost} per spoofing call."
             )
         
-        # Reserve/hold credit - deduct estimated cost immediately
-        new_balance = current_user['balance'] - estimated_cost
+        # Deduct FLAT cost immediately (no reserve, direct charge)
+        new_balance = current_user['balance'] - flat_spoofing_cost
         await MongoDBService.update_user_balance(current_user['uid'], new_balance)
         
-        logger.info(f"💰 Reserved ${estimated_cost} (SPOOFING) from user {current_user['uid']} balance. New balance: ${new_balance}")
+        logger.info(f"💰 Charged FLAT ${flat_spoofing_cost} (SPOOFING) from user {current_user['uid']} balance. New balance: ${new_balance}")
         
         # Replace variables in messages
         def replace_vars(text):
