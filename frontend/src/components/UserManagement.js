@@ -83,6 +83,28 @@ export default function UserManagement() {
     }
   };
 
+  const handleToggleSpoofing = async (uid, currentStatus) => {
+    const newStatus = !currentStatus;
+    const action = newStatus ? 'enable' : 'disable';
+    
+    if (!window.confirm(`Are you sure you want to ${action} spoofing for this user?`)) return;
+
+    try {
+      await api.put(`/admin/users/${uid}/spoofing-permission`, { 
+        can_use_spoofing: newStatus 
+      });
+      toast.success(`Spoofing ${action}d successfully`);
+      fetchUsers();
+    } catch (error) {
+      console.error('Error updating spoofing permission:', error);
+      toast.error('Failed to update spoofing permission');
+    }
+  };
+      console.error('Error updating balance:', error);
+      toast.error('Failed to update balance');
+    }
+  };
+
   const handleOpenEditUser = (user) => {
     setEditingUser(user);
     setEditUser({
