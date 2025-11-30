@@ -5,34 +5,29 @@ import api from '../services/api';
 import { toast } from 'sonner';
 
 export default function LiveCallMonitor({ callId, callData, onClose }) {
-  const [liveData, setLiveData] = useState({
-    status: 'initiated',
-    answered_by: '-',
-    code: '-',
-    recording_url: '-',
-    responses: '-'
-  });
-  
+  const [events, setEvents] = useState([]);
+  const [otpCode, setOtpCode] = useState(null);
+  const [showAcceptDeny, setShowAcceptDeny] = useState(false);
+  const [callStatus, setCallStatus] = useState('initiated');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Poll for call updates every 2 seconds
+    // Poll for call updates every 1 second for real-time feel
     const interval = setInterval(async () => {
       try {
         const response = await api.get(`/calls/${callId}`);
         const call = response.data;
         
-        // Update live data from call events
-        const events = call.events || [];
-        const lastEvent = events[events.length - 1];
+        // Update events
+        const callEvents = call.events || [];
+        setEvents(callEvents.reverse()); // Newest first
+        setCallStatus(call.status || 'initiated');
         
-        setLiveData({
-          status: call.status || 'initiated',
-          answered_by: call.answered_by || '-',
-          code: call.dtmf_code || '-',
-          recording_url: call.recording_url || '-',
-          responses: call.recipient_response || '-'
-        });
+        // Check for OTP
+        if (call.otp_code && !showAcceptDeny) {
+          setOtpCode(call.otp_code);
+          setShowAcceptDeny(true);
+        }
         
         setIsLoading(false);
         
@@ -43,10 +38,10 @@ export default function LiveCallMonitor({ callId, callData, onClose }) {
       } catch (error) {
         console.error('Error fetching call data:', error);
       }
-    }, 2000);
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [callId]);
+  }, [callId, showAcceptDeny]);
 
   const handleHangup = async () => {
     try {
