@@ -74,6 +74,7 @@ export default function Dashboard() {
           activeTab={activeTab} 
           setActiveTab={setActiveTab}
           userRole={userProfile.role}
+          userProfile={userProfile}
         />
         
         <main className="flex-1 p-6 overflow-auto">
