@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from models.schemas import CallCreate, SpoofCallCreate, CallResponse, CallControl
-from services.firebase_service import FirebaseService
+from services.mongodb_service import MongoDBService
 from services.signalwire_service import SignalWireService
 from services.infobip_service import InfobipService
 from services.infobip_sip_service import InfobipSIPService
