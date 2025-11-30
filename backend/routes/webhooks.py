@@ -586,9 +586,12 @@ async def signalwire_retry_otp(call_id: str, Digits: str = Form(None)):
             }
             await MongoDBService.update_call_events(call_id, msg_event)
             
+            # Generate voice element for Step 3 (retry)
+            voice_element_3 = await generate_voice_element(step_3_message, voice)
+            
             twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="{voice}">{step_3_message}</Say>
+    {voice_element_3}
     <Pause length="3"/>
     <Redirect>{wait_url}</Redirect>
 </Response>'''
