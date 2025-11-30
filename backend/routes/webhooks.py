@@ -133,6 +133,7 @@ async def signalwire_webhook(call_id: str, request: Request):
         first_input_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/first-input"
         
         # Log message played event
+        logger.info(f"✅ Logging message_played event for call {call_id}")
         msg_event = {
             'time': datetime.utcnow().isoformat(),
             'event': 'message_played',
@@ -140,6 +141,7 @@ async def signalwire_webhook(call_id: str, request: Request):
             'data': {'step': 1, 'attempt': 1}
         }
         await MongoDBService.update_call_events(call_id, msg_event)
+        logger.info(f"✅ message_played event logged successfully")
         
         # For human/unknown - use longer timeout and allow retry
         retry_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/retry-step1"
