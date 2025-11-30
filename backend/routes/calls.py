@@ -419,6 +419,14 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
             'accepted_message': accepted_message,
             'rejected_message': rejected_message,
             'digits': call_data.digits,
+            # Billing info for spoofing
+            'cost_per_minute': spoofing_cost_per_minute,
+            'estimated_cost': estimated_cost,
+            'reserved_amount': estimated_cost,
+            'actual_cost': 0,
+            'billing_status': 'reserved'
+        }
+            'digits': call_data.digits,
             'sip_domain': os.getenv('INFOBIP_SIP_DOMAIN', '81.23.254.103'),
             'sip_port': int(os.getenv('INFOBIP_SIP_PORT', '5061'))
         }
