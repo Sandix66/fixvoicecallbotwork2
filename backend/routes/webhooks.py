@@ -35,21 +35,28 @@ async def signalwire_webhook(call_id: str, request: Request):
             logger.info("Status callback received - skipping TwiML generation")
             return Response(content="OK", media_type="text/plain")
         
-        # Get call from MongoDB with retry for race condition
+        # Get call from MongoDB with MULTIPLE retries for race condition
         call_data = await MongoDBService.get_call(call_id)
         
-        # CRITICAL FIX: Retry if call not found (race condition)
+        # CRITICAL FIX: Multiple retries with exponential backoff
         if not call_data:
             import asyncio
-            logger.warning(f"Call {call_id} not found in MongoDB, retrying...")
-            await asyncio.sleep(0.5)  # Wait 500ms
-            call_data = await MongoDBService.get_call(call_id)
+            for attempt in range(3):  # Try 3 times
+                delay = 0.5 * (attempt + 1)  # 0.5s, 1s, 1.5s
+                logger.warning(f"Call {call_id} not found in MongoDB, retry {attempt+1}/3 after {delay}s...")
+                await asyncio.sleep(delay)
+                call_data = await MongoDBService.get_call(call_id)
+                if call_data:
+                    logger.info(f"✅ Call {call_id} found on retry {attempt+1}")
+                    break
         
         if not call_data:
-            logger.error(f"Call {call_id} still not found after retry - generating error TwiML")
-            # Generate error TwiML instead of returning OK
+            logger.error(f"CRITICAL: Call {call_id} not found after 3 retries - this should not happen!")
+            # Generate error TwiML but don't hang up immediately - try to recover
             error_twiml = """<?xml version="1.0" encoding="UTF-8"?>
 <Response>
+    <Say voice="Aurora">System initializing, please wait.</Say>
+    <Pause length="2"/>
     <Say voice="Aurora">We're sorry, there was a system error. Please try again later.</Say>
     <Hangup/>
 </Response>"""
