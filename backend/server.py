@@ -81,25 +81,50 @@ async def health_check():
     return {"status": "healthy", "database": "mongodb"}
 
 # Deepgram audio serving endpoint
-@app.get("/api/audio/deepgram/{audio_id}.mp3")
-async def serve_deepgram_audio(audio_id: str):
-    """Serve Deepgram generated audio files"""
+@app.api_route("/api/audio/deepgram/{audio_id}.mp3", methods=["GET", "HEAD"])
+async def serve_deepgram_audio(audio_id: str, request: Request):
+    """Serve Deepgram generated audio files - Support both GET and HEAD requests"""
     from fastapi.responses import FileResponse
     from services.deepgram_service import DeepgramService
     
     try:
         deepgram = DeepgramService()
-        audio_data = deepgram.get_audio_file(audio_id)
+        filename = os.path.join(deepgram.audio_dir, f"{audio_id}.mp3")
         
-        # Return audio as streaming response
+        # Check if file exists
+        if not os.path.exists(filename):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Audio file not found")
+        
+        # Get file size for Content-Length header
+        file_size = os.path.getsize(filename)
+        
+        # For HEAD requests, return headers only (SignalWire validation)
+        if request.method == "HEAD":
+            from fastapi import Response as FastAPIResponse
+            return FastAPIResponse(
+                status_code=200,
+                headers={
+                    "Content-Type": "audio/mpeg",
+                    "Content-Length": str(file_size),
+                    "Accept-Ranges": "bytes",
+                    "Cache-Control": "public, max-age=3600"
+                }
+            )
+        
+        # For GET requests, return audio file
         from fastapi.responses import StreamingResponse
         import io
+        
+        audio_data = deepgram.get_audio_file(audio_id)
         
         return StreamingResponse(
             io.BytesIO(audio_data),
             media_type="audio/mpeg",
             headers={
                 "Content-Disposition": f"inline; filename={audio_id}.mp3",
+                "Content-Length": str(len(audio_data)),
+                "Accept-Ranges": "bytes",
                 "Cache-Control": "public, max-age=3600"
             }
         )
