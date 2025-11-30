@@ -218,6 +218,7 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
         return Response(
             content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Error</Say><Hangup/></Response>',
             media_type="application/xml"
+        )
 
 @router.post("/signalwire/{call_id}/wait")
 async def signalwire_wait(call_id: str):
@@ -271,8 +272,6 @@ async def signalwire_wait(call_id: str):
         return Response(
             content='<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>',
             media_type="application/xml"
-        )
-
         )
 
 @router.post("/signalwire/{call_id}/accept")
