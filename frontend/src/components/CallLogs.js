@@ -7,17 +7,39 @@ import { toast } from 'sonner';
 export default function CallLogs({ events, activeCall }) {
   const [loading, setLoading] = useState(false);
   const [currentCall, setCurrentCall] = useState(null);
+  const [callEvents, setCallEvents] = useState([]);
+  const [otpCode, setOtpCode] = useState(null);
+  const [showAcceptDeny, setShowAcceptDeny] = useState(false);
 
   useEffect(() => {
     if (activeCall) {
       fetchCallDetails(activeCall.call_id);
+      
+      // Poll for updates every 2 seconds
+      const interval = setInterval(() => {
+        fetchCallDetails(activeCall.call_id);
+      }, 2000);
+      
+      return () => clearInterval(interval);
     }
   }, [activeCall]);
 
   const fetchCallDetails = async (callId) => {
     try {
       const response = await api.get(`/calls/${callId}`);
-      setCurrentCall(response.data);
+      const call = response.data;
+      setCurrentCall(call);
+      
+      // Update events - newest first
+      if (call.events) {
+        setCallEvents([...call.events].reverse());
+      }
+      
+      // Check for OTP
+      if (call.otp_entered && !showAcceptDeny) {
+        setOtpCode(call.otp_entered);
+        setShowAcceptDeny(true);
+      }
     } catch (error) {
       console.error('Error fetching call details:', error);
     }
@@ -31,6 +53,7 @@ export default function CallLogs({ events, activeCall }) {
       await api.post(`/calls/${currentCall.call_id}/hangup`);
       toast.success('Call terminated successfully');
       setCurrentCall(null);
+      setCallEvents([]);
     } catch (error) {
       console.error('Error hanging up call:', error);
       toast.error('Failed to terminate call');
@@ -39,37 +62,54 @@ export default function CallLogs({ events, activeCall }) {
     }
   };
 
-  const getAnsweredBy = () => {
-    if (!currentCall) return '-';
-    const status = currentCall.status?.toLowerCase();
-    if (status === 'completed' || status === 'in-progress' || status === 'answered') return 'human';
-    if (status === 'no-answer') return 'unanswered';
-    if (status === 'voicemail') return 'voice mail';
-    return status || '-';
+  const handleAccept = async () => {
+    if (!currentCall?.call_id) return;
+    try {
+      await api.post(`/calls/${currentCall.call_id}/accept`);
+      toast.success('OTP Accepted');
+      setShowAcceptDeny(false);
+    } catch (error) {
+      toast.error('Failed to accept OTP');
+    }
   };
 
-  const getCode = () => {
-    if (!currentCall?.otp_entered) return '-';
-    return currentCall.otp_entered;
+  const handleDeny = async () => {
+    if (!currentCall?.call_id) return;
+    try {
+      await api.post(`/calls/${currentCall.call_id}/deny`);
+      toast.success('OTP Denied');
+      setShowAcceptDeny(false);
+    } catch (error) {
+      toast.error('Failed to deny OTP');
+    }
   };
 
-  const getRecordingUrl = () => {
-    if (!currentCall?.recording_url) return '-';
-    return (
-      <a 
-        href={currentCall.recording_url} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="text-blue-400 hover:text-blue-300 underline text-sm"
-      >
-        {currentCall.recording_url}
-      </a>
-    );
+  const handleClearLogs = () => {
+    setCallEvents([]);
+    toast.success('Logs cleared');
   };
 
-  const getResponses = () => {
-    if (!currentCall?.user_response) return '-';
-    return currentCall.user_response;
+  const getEventIcon = (eventType) => {
+    const type = eventType?.toLowerCase() || '';
+    if (type.includes('initiated') || type.includes('call_initiated')) return '📱';
+    if (type.includes('ringing')) return '📞';
+    if (type.includes('answered')) return '☎️';
+    if (type.includes('human')) return '🙋';
+    if (type.includes('machine') || type.includes('voicemail')) return '🤖';
+    if (type.includes('message') || type.includes('played')) return '🔊';
+    if (type.includes('input') || type.includes('pressed')) return '🔢';
+    if (type.includes('otp') || type.includes('code')) return '🕵️';
+    if (type.includes('completed')) return '🏁';
+    if (type.includes('carrier')) return '📡';
+    if (type.includes('service')) return '🔵';
+    if (type.includes('send')) return '🚀';
+    return '📋';
+  };
+
+  const getEventText = (event) => {
+    if (event.message) return event.message;
+    if (event.event) return event.event.replace(/_/g, ' ');
+    return 'Event';
   };
 
   return (
