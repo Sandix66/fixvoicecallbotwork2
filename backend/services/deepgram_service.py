@@ -1,4 +1,3 @@
-from deepgram import DeepgramClient, SpeakOptions
 import os
 import logging
 import httpx
