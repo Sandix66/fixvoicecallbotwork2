@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-CallBot Analytics System Backend API Tests
+CallBot Research System Backend API Tests
 Testing JWT Authentication, MongoDB operations, and API endpoints
+Focus: Bug investigation for data persistence issues
 """
 
 import requests
@@ -17,6 +18,7 @@ class CallBotAPITester:
         self.tests_run = 0
         self.tests_passed = 0
         self.admin_user = None
+        self.test_call_id = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
