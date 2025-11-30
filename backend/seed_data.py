@@ -9,6 +9,11 @@ Seed initial data to MongoDB
 import asyncio
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent))
