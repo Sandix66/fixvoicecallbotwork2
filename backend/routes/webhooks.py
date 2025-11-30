@@ -28,6 +28,13 @@ async def signalwire_webhook(call_id: str, request: Request):
         
         logger.info(f"SignalWire webhook for call {call_id}: {call_status}, AnsweredBy: {answered_by}")
         
+        # CRITICAL FIX: Only generate TwiML for initial call setup, not for status updates
+        # Status updates should be handled by the /status endpoint
+        if call_status and call_status.lower() in ['ringing', 'in-progress', 'completed', 'busy', 'failed', 'no-answer', 'canceled']:
+            # This is a status update - don't generate TwiML, just return OK
+            logger.info(f"Status callback received - skipping TwiML generation")
+            return Response(content="OK", media_type="text/plain")
+        
         # Get call from MongoDB with retry for race condition
         call_data = await MongoDBService.get_call(call_id)
         
