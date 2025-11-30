@@ -189,6 +189,15 @@ class MongoDBService:
         return result.modified_count > 0
     
     @staticmethod
+    async def update_call_data(call_id: str, update_data: dict):
+        """Update multiple call fields"""
+        result = await db.calls.update_one(
+            {"call_id": call_id},
+            {"$set": update_data}
+        )
+        return result.modified_count > 0
+    
+    @staticmethod
     async def get_user_calls(user_id: str, limit: int = 100):
         """Get user call history"""
         cursor = db.calls.find({"user_id": user_id}).sort("created_at", -1).limit(limit)
