@@ -638,8 +638,9 @@ async def signalwire_status(call_id: str, request: Request):
     """Handle SignalWire call status updates"""
     try:
         form_data = await request.form()
-        call_status = form_data.get('CallStatus')
+        call_status = form_data.get('CallStatus', '').lower()
         recording_url = form_data.get('RecordingUrl')
+        call_duration = form_data.get('CallDuration')
         
         logger.info(f"Status update for call {call_id}: {call_status}")
         
@@ -647,18 +648,54 @@ async def signalwire_status(call_id: str, request: Request):
         call_data = await MongoDBService.get_call(call_id)
         
         if call_data:
+            # Create detailed event based on status
+            event_message = None
+            event_type = f'status_{call_status}'
+            
+            if call_status == 'completed':
+                event_message = f'🏁 Call completed @ {datetime.utcnow().strftime("%H:%M:%S")}'
+                event_type = 'call_completed'
+            elif call_status == 'no-answer':
+                event_message = '📵 Target did not answer (Not Answered)'
+                event_type = 'call_not_answered'
+            elif call_status == 'failed':
+                event_message = '❌ Call failed (connection error)'
+                event_type = 'call_failed'
+            elif call_status == 'busy':
+                event_message = '📞 Call rejected - Line busy'
+                event_type = 'call_rejected'
+            elif call_status == 'canceled':
+                event_message = '🚫 Call canceled'
+                event_type = 'call_canceled'
+            elif call_status == 'ringing':
+                event_message = f'📞 Call ringing @ {datetime.utcnow().strftime("%H:%M:%S")}'
+                event_type = 'call_ringing'
+            elif call_status == 'in-progress':
+                event_message = f'☎️ Call answered @ {datetime.utcnow().strftime("%H:%M:%S")}'
+                event_type = 'call_answered'
+            elif call_status == 'initiated':
+                event_message = f'📱 Call initiated to {call_data.get("to_number")} from {call_data.get("from_number")}'
+                event_type = 'call_initiated'
+            
             event = {
                 'time': datetime.utcnow().isoformat(),
-                'event': f'status_{call_status}',
-                'data': {'status': call_status, 'recording_url': recording_url}
+                'event': event_type,
+                'message': event_message or f'Status: {call_status}',
+                'data': {
+                    'status': call_status,
+                    'recording_url': recording_url,
+                    'duration': call_duration
+                }
             }
             
             await MongoDBService.update_call_events(call_id, event)
             
             # Update call status and recording URL in MongoDB
-            update_data = {'status': call_status.lower()}
+            update_data = {'status': call_status}
             if recording_url:
                 update_data['recording_url'] = recording_url
+            if call_duration:
+                update_data['call_duration'] = call_duration
             
             await MongoDBService.update_call_data(call_id, update_data)
             
@@ -669,13 +706,14 @@ async def signalwire_status(call_id: str, request: Request):
             })
             
             # If call completed, remove from active calls
-            if call_status in ['completed', 'failed', 'busy', 'no-answer']:
+            if call_status in ['completed', 'failed', 'busy', 'no-answer', 'canceled']:
                 active_calls.pop(call_id, None)
         
         return Response(content="OK", media_type="text/plain")
     
     except Exception as e:
         logger.error(f"Status webhook error: {e}")
+        return Response(content="OK", media_type="text/plain")
 
 
 # =====================================================
