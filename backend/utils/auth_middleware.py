@@ -1,30 +1,34 @@
 from fastapi import HTTPException, Security, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from firebase_admin import auth
-from config.firebase_init import db
+from services.jwt_service import JWTService
+from services.mongodb_service import MongoDBService
 import logging
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer()
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
-    """Verify Firebase ID token"""
+    """Verify JWT token"""
     try:
         token = credentials.credentials
-        decoded_token = auth.verify_id_token(token)
-        uid = decoded_token['uid']
+        payload = JWTService.verify_token(token)
         
-        # Get user from Firestore
-        user_ref = db.collection('users').document(uid)
-        user_doc = user_ref.get()
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid token")
         
-        if not user_doc.exists:
+        uid = payload.get('sub')
+        if not uid:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        
+        # Get user from MongoDB
+        user_data = await MongoDBService.get_user(uid)
+        
+        if not user_data:
             raise HTTPException(status_code=404, detail="User not found")
         
-        user_data = user_doc.to_dict()
-        user_data['uid'] = uid
-        
         return user_data
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Token verification failed: {e}")
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
