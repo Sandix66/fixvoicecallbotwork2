@@ -27,12 +27,25 @@ async def signalwire_webhook(call_id: str, request: Request):
         
         logger.info(f"SignalWire webhook for call {call_id}: {call_status}")
         
-        # Get call from MongoDB
+        # Get call from MongoDB with retry for race condition
         call_data = await MongoDBService.get_call(call_id)
         
+        # CRITICAL FIX: Retry if call not found (race condition)
         if not call_data:
-            logger.warning(f"Call {call_id} not found in MongoDB")
-            return Response(content="OK", media_type="text/plain")
+            import asyncio
+            logger.warning(f"Call {call_id} not found in MongoDB, retrying...")
+            await asyncio.sleep(0.5)  # Wait 500ms
+            call_data = await MongoDBService.get_call(call_id)
+        
+        if not call_data:
+            logger.error(f"Call {call_id} still not found after retry - generating error TwiML")
+            # Generate error TwiML instead of returning OK
+            error_twiml = """<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="Aurora">We're sorry, there was a system error. Please try again later.</Say>
+    <Hangup/>
+</Response>"""
+            return Response(content=error_twiml, media_type="application/xml")
         
         # Create event
         event = {
