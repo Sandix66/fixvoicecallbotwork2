@@ -44,10 +44,10 @@ export default function CallLogs({ events, activeCall }) {
   const getAnsweredBy = () => {
     if (!currentCall) return '-';
     const status = currentCall.status?.toLowerCase();
-    if (status === 'completed') return 'HUMAN';
-    if (status === 'no-answer') return 'UNANSWERED';
-    if (status === 'voicemail') return 'VOICE MAIL';
-    return status?.toUpperCase() || '-';
+    if (status === 'completed' || status === 'in-progress' || status === 'answered') return 'human';
+    if (status === 'no-answer') return 'unanswered';
+    if (status === 'voicemail') return 'voice mail';
+    return status || '-';
   };
 
   const getCode = () => {
@@ -62,16 +62,16 @@ export default function CallLogs({ events, activeCall }) {
         href={currentCall.recording_url} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="text-blue-400 hover:text-blue-300 underline"
+        className="text-blue-400 hover:text-blue-300 underline text-sm"
       >
-        View Recording
+        {currentCall.recording_url}
       </a>
     );
   };
 
   const getResponses = () => {
     if (!currentCall?.user_response) return '-';
-    return `Recipient Pressed ${currentCall.user_response}`;
+    return currentCall.user_response;
   };
 
   return (
