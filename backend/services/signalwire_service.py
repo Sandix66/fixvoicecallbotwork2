@@ -21,9 +21,10 @@ class SignalWireService:
                 'To': to_number,
                 'Url': callback_url,
                 'StatusCallback': status_callback_url or callback_url,
-                'Record': 'true'
-                # AMD REMOVED - It was blocking TwiML execution!
-                # Voice will play immediately after call answered
+                'Record': 'true',
+                'MachineDetection': 'Enable',
+                'AsyncAmd': 'true',  # AMD runs in background - TwiML executes immediately!
+                'AsyncAmdStatusCallback': status_callback_url or callback_url  # AMD result sent here
             }
             
             async with httpx.AsyncClient() as client:
