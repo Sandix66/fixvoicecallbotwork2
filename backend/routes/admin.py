@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from models.schemas import SignalWireNumber, SignalWireCredentials
-from config.firebase_init import db
-from google.cloud import firestore
+from services.mongodb_service import MongoDBService
 from utils.auth_middleware import verify_admin
 from typing import List
 import logging
@@ -14,11 +13,12 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 async def add_signalwire_number(number: SignalWireNumber, current_user: dict = Depends(verify_admin)):
     """Add SignalWire phone number"""
     try:
-        number_ref = db.collection('signalwire_numbers').document()
-        number_data = number.model_dump()
-        number_data['created_at'] = firestore.SERVER_TIMESTAMP
-        number_ref.set(number_data)
-        return {"message": "Phone number added successfully", "id": number_ref.id}
+        success = await MongoDBService.add_signalwire_number(number.phone_number)
+        if not success:
+            raise HTTPException(status_code=400, detail="Number already exists")
+        return {"message": "Phone number added successfully"}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error adding number: {e}")
         raise HTTPException(status_code=500, detail="Failed to add number")
@@ -26,30 +26,23 @@ async def add_signalwire_number(number: SignalWireNumber, current_user: dict = D
 @router.get("/signalwire/numbers", response_model=List[SignalWireNumber])
 async def get_signalwire_numbers(current_user: dict = Depends(verify_admin)):
     """Get all SignalWire numbers"""
-    numbers_ref = db.collection('signalwire_numbers')
-    docs = numbers_ref.stream()
-    
-    numbers = []
-    for doc in docs:
-        number_data = doc.to_dict()
-        numbers.append(SignalWireNumber(**number_data))
-    
-    return numbers
+    numbers = await MongoDBService.get_signalwire_numbers()
+    return [SignalWireNumber(**number) for number in numbers]
 
-@router.delete("/signalwire/numbers/{number_id}")
-async def delete_signalwire_number(number_id: str, current_user: dict = Depends(verify_admin)):
+@router.delete("/signalwire/numbers/{phone_number}")
+async def delete_signalwire_number(phone_number: str, current_user: dict = Depends(verify_admin)):
     """Delete SignalWire number"""
-    db.collection('signalwire_numbers').document(number_id).delete()
+    from config.mongodb_init import db
+    result = await db.signalwire_numbers.delete_one({"phone_number": phone_number})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Number not found")
     return {"message": "Number deleted successfully"}
 
 @router.put("/signalwire/credentials")
 async def update_signalwire_credentials(credentials: SignalWireCredentials, current_user: dict = Depends(verify_admin)):
     """Update SignalWire credentials"""
     try:
-        cred_ref = db.collection('signalwire_credentials').document('default')
-        cred_data = credentials.model_dump()
-        cred_data['updated_at'] = firestore.SERVER_TIMESTAMP
-        cred_ref.set(cred_data)
+        await MongoDBService.set_provider_config('signalwire', credentials.model_dump())
         return {"message": "Credentials updated successfully"}
     except Exception as e:
         logger.error(f"Error updating credentials: {e}")
@@ -58,35 +51,23 @@ async def update_signalwire_credentials(credentials: SignalWireCredentials, curr
 @router.get("/signalwire/credentials")
 async def get_signalwire_credentials(current_user: dict = Depends(verify_admin)):
     """Get SignalWire credentials (masked)"""
-    cred_ref = db.collection('signalwire_credentials').document('default')
-    cred_doc = cred_ref.get()
+    config = await MongoDBService.get_provider_config('signalwire')
     
-    if not cred_doc.exists:
+    if not config:
         return {
             "project_id": os.getenv('SIGNALWIRE_PROJECT_ID', ''),
             "space_url": os.getenv('SIGNALWIRE_SPACE_URL', ''),
             "token": "****" + os.getenv('SIGNALWIRE_TOKEN', '')[-4:] if os.getenv('SIGNALWIRE_TOKEN') else ''
         }
     
-    cred_data = cred_doc.to_dict()
     # Mask token
-    if 'token' in cred_data:
-        cred_data['token'] = "****" + cred_data['token'][-4:]
+    if 'token' in config:
+        config['token'] = "****" + config['token'][-4:]
     
-    return cred_data
+    return config
 
 @router.get("/signalwire/numbers/available")
 async def get_available_numbers():
     """Get available SignalWire numbers (public endpoint for users)"""
-    numbers_ref = db.collection('signalwire_numbers').where('is_active', '==', True)
-    docs = numbers_ref.stream()
-    
-    numbers = []
-    for doc in docs:
-        number_data = doc.to_dict()
-        numbers.append({
-            'id': doc.id,
-            'phone_number': number_data.get('phone_number')
-        })
-    
-    return numbers
+    numbers = await MongoDBService.get_available_numbers()
+    return [{'phone_number': num['phone_number']} for num in numbers]
