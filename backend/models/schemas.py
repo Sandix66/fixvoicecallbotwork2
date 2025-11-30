@@ -23,9 +23,13 @@ class UserResponse(BaseModel):
     device_id: Optional[str] = None
     telegram_id: Optional[str] = None
     created_at: Optional[str] = None
+    can_use_spoofing: Optional[bool] = False
 
 class UpdateBalance(BaseModel):
     amount: float
+
+class UpdateSpoofingPermission(BaseModel):
+    can_use_spoofing: bool
 
 class ChangePassword(BaseModel):
     old_password: str
