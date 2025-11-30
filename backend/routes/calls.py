@@ -416,10 +416,11 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
             'accepted_message': accepted_message,
             'rejected_message': rejected_message,
             'digits': call_data.digits,
-            # Billing info for spoofing - FLAT RATE
-            'flat_cost_per_call': flat_spoofing_cost,
-            'charged_amount': flat_spoofing_cost,
-            'billing_status': 'charged',  # Immediately charged, no reserve
+            # Billing info for spoofing - PER MINUTE (incremental)
+            'cost_per_minute': cost_per_minute,
+            'minutes_charged': 1,  # Already charged 1st minute
+            'charged_amount': first_minute_cost,  # Running total
+            'billing_status': 'partial_charged',  # Will be finalized on call end
             'sip_domain': os.getenv('INFOBIP_SIP_DOMAIN', '81.23.254.103'),
             'sip_port': int(os.getenv('INFOBIP_SIP_PORT', '5061'))
         }
