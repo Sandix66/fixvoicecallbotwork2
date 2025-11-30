@@ -68,6 +68,17 @@ async def start_call(call_data: CallCreate, current_user: dict = Depends(verify_
         call_log = await MongoDBService.create_call_log(call_log)
         call_id = call_log['call_id']
         
+        # CRITICAL FIX: Verify call is saved before proceeding
+        import asyncio
+        await asyncio.sleep(0.2)  # Wait 200ms for DB write confirmation
+        
+        # Verify call exists in DB
+        verify_call = await MongoDBService.get_call(call_id)
+        if not verify_call:
+            logger.error(f"Call {call_id} not found in DB after creation - retrying save")
+            await MongoDBService.create_call_log(call_log)
+            await asyncio.sleep(0.1)
+        
         # Store call data
         active_calls[call_id] = call_log
         
