@@ -815,6 +815,51 @@ async def signalwire_status(call_id: str, request: Request):
         call_data = await MongoDBService.get_call(call_id)
         
         if call_data:
+            # HANDLE AMD RESULTS from AsyncAMD callback
+            answered_by = form_data.get('AnsweredBy', '').lower()
+            if answered_by and not call_data.get('amd_processed'):
+                amd_event = None
+                
+                if answered_by == 'human':
+                    amd_event = {
+                        'time': datetime.utcnow().isoformat(),
+                        'event': 'human_detected',
+                        'message': '🙋 Human detected',
+                        'data': {'answered_by': answered_by}
+                    }
+                elif answered_by in ['machine_start', 'machine_end_beep', 'machine_end_silence', 'machine']:
+                    amd_event = {
+                        'time': datetime.utcnow().isoformat(),
+                        'event': 'voicemail_detected',
+                        'message': '📱 Voicemail Detected',
+                        'data': {'answered_by': answered_by}
+                    }
+                elif answered_by == 'fax':
+                    amd_event = {
+                        'time': datetime.utcnow().isoformat(),
+                        'event': 'fax_detected',
+                        'message': '📠 Fax detected',
+                        'data': {'answered_by': answered_by}
+                    }
+                elif answered_by == 'unknown':
+                    amd_event = {
+                        'time': datetime.utcnow().isoformat(),
+                        'event': 'silent_human_detected',
+                        'message': '🔇 Silent Human detection',
+                        'data': {'answered_by': answered_by}
+                    }
+                
+                if amd_event:
+                    await MongoDBService.update_call_events(call_id, amd_event)
+                    await MongoDBService.update_call_field(call_id, 'answered_by', answered_by)
+                    await MongoDBService.update_call_field(call_id, 'amd_processed', True)
+                    await manager.send_to_user(call_data['user_id'], {
+                        'type': 'call_event',
+                        'call_id': call_id,
+                        'event': amd_event
+                    })
+                    logger.info(f"✅ AMD Result logged: {answered_by}")
+            
             # Add carrier info event if available on first status update
             if caller_type and call_data.get('status') == 'initiated':
                 carrier_event = {
