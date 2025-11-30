@@ -1,11 +1,11 @@
 [
   {
     "content": "Copy all files from GitHub repository to /app directory",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Create MongoDB connection and database models (users, calls, signalwire_numbers, payments, provider_config)",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Create Pydantic models with UUID IDs and timezone-aware datetimes",
