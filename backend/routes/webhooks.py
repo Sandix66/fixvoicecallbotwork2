@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Form, HTTPException
 from fastapi.responses import Response
-from services.firebase_service import FirebaseService
+from services.mongodb_service import MongoDBService
 from services.signalwire_service import SignalWireService
 from services.telegram_service import TelegramService
 from services.websocket_manager import manager
