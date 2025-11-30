@@ -25,16 +25,12 @@ async def signalwire_webhook(call_id: str, request: Request):
         
         logger.info(f"SignalWire webhook for call {call_id}: {call_status}")
         
-        # Get call from Firestore
-        from config.firebase_init import db
-        call_ref = db.collection('calls').document(call_id)
-        call_doc = call_ref.get()
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
         
-        if not call_doc.exists:
-            logger.warning(f"Call {call_id} not found in Firestore")
+        if not call_data:
+            logger.warning(f"Call {call_id} not found in MongoDB")
             return Response(content="OK", media_type="text/plain")
-        
-        call_data = call_doc.to_dict()
         
         # Create event
         event = {
