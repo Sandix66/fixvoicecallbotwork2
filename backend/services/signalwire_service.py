@@ -22,7 +22,12 @@ class SignalWireService:
                 'Url': callback_url,
                 'StatusCallback': status_callback_url or callback_url,
                 'Record': 'true',
-                'MachineDetection': 'Enable'  # Simple AMD detection
+                'MachineDetection': 'DetectMessageEnd',  # Better AMD - wait for end of voicemail greeting
+                'MachineDetectionTimeout': 30,  # Wait up to 30 seconds
+                'MachineDetectionSpeechThreshold': 2400,  # 2.4 seconds of speech
+                'MachineDetectionSpeechEndThreshold': 1200,  # 1.2 seconds of silence
+                'MachineDetectionSilenceTimeout': 5000,  # 5 seconds of silence = human answered
+                'AsyncAmd': 'false'  # IMPORTANT: Synchronous AMD to prevent race condition
             }
             
             async with httpx.AsyncClient() as client:
