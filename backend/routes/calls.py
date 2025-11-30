@@ -182,7 +182,7 @@ async def control_call(call_id: str, control: CallControl, current_user: dict = 
     await MongoDBService.update_call_events(call_id, event)
     
     # Update call status
-    call_ref.update({'status': control.action})
+    await MongoDBService.update_call_status(call_id, control.action)
     
     await manager.send_to_user(call_data['user_id'], {
         'type': 'call_event',
