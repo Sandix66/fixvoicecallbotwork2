@@ -167,7 +167,7 @@ export default function CallLogs({ events, activeCall }) {
           <Button
             onClick={handleHangup}
             disabled={loading || !currentCall}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center"
             data-testid="hangup-button"
           >
             {loading ? (
@@ -183,26 +183,6 @@ export default function CallLogs({ events, activeCall }) {
             )}
           </Button>
         </div>
-
-        {/* Live Events */}
-        {events && events.length > 0 && (
-          <div className="border-t border-gray-700 pt-6">
-            <h3 className="text-sm font-semibold text-[#00FF7F] mb-3">LIVE EVENTS</h3>
-            <ScrollArea className="h-48">
-              <div className="space-y-2">
-                {events.map((event, index) => (
-                  <div key={index} className="flex items-start gap-3 text-sm">
-                    <span className="text-gray-400 min-w-[70px]">
-                      {format(new Date(event.time || new Date()), 'HH:mm:ss')}
-                    </span>
-                    <span className="text-[#00FF7F]">→</span>
-                    <span className="text-white flex-1">{event.event || event.message}</span>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-        )}
 
         {/* Loading Message */}
         {!currentCall && (
