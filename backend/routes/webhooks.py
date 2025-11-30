@@ -82,7 +82,7 @@ async def signalwire_first_input(call_id: str, request: Request, Digits: str = F
         logger.info(f"First input for call {call_id}: {Digits}")
         
         # Get call from Firestore
-        from config.firebase_init import db
+        # MongoDB operations handled by MongoDBService
         call_ref = db.collection('calls').document(call_id)
         call_doc = call_ref.get()
         
@@ -143,7 +143,7 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
         logger.info(f"Deny flow for call {call_id}, Digits: {Digits}")
         
         # Get call from Firestore
-        from config.firebase_init import db
+        # MongoDB operations handled by MongoDBService
         call_ref = db.collection('calls').document(call_id)
         call_doc = call_ref.get()
         
@@ -228,7 +228,7 @@ async def signalwire_accept(call_id: str, request: Request):
         logger.info(f"Accept flow for call {call_id}")
         
         # Get call from Firestore
-        from config.firebase_init import db
+        # MongoDB operations handled by MongoDBService
         call_ref = db.collection('calls').document(call_id)
         call_doc = call_ref.get()
         
@@ -281,7 +281,7 @@ async def signalwire_gather(call_id: str, request: Request, Digits: str = Form(N
         logger.info(f"Gathered digits for call {call_id}: {Digits}")
         
         # Get call from Firestore
-        from config.firebase_init import db
+        # MongoDB operations handled by MongoDBService
         call_ref = db.collection('calls').document(call_id)
         call_doc = call_ref.get()
         
@@ -345,7 +345,7 @@ async def get_call_data_for_webhook(call_id: str):
     """Get call data for external PHP webhook (public endpoint)"""
     try:
         # Get call from Firestore
-        from config.firebase_init import db
+        # MongoDB operations handled by MongoDBService
         call_ref = db.collection('calls').document(call_id)
         call_doc = call_ref.get()
         
@@ -387,7 +387,7 @@ async def external_webhook_update(call_id: str, request: Request):
         logger.info(f"External webhook update for call {call_id}: {data}")
         
         # Get call from Firestore
-        from config.firebase_init import db
+        # MongoDB operations handled by MongoDBService
         call_ref = db.collection('calls').document(call_id)
         call_doc = call_ref.get()
         
@@ -433,7 +433,7 @@ async def signalwire_status(call_id: str, request: Request):
         logger.info(f"Status update for call {call_id}: {call_status}")
         
         # Get call from Firestore
-        from config.firebase_init import db
+        # MongoDB operations handled by MongoDBService
         call_ref = db.collection('calls').document(call_id)
         call_doc = call_ref.get()
         
@@ -479,7 +479,7 @@ async def signalwire_status(call_id: str, request: Request):
 async def infobip_webhook(call_id: str, request: Request):
     """Main webhook for Infobip calls - Step 1"""
     try:
-        from config.firebase_init import db
+        # MongoDB operations handled by MongoDBService
         call_ref = db.collection('calls').document(call_id)
         call_doc = call_ref.get()
         
@@ -515,7 +515,7 @@ async def infobip_first_input(call_id: str, request: Request):
         body = await request.json()
         digits = body.get('dtmf', {}).get('digits', '')
         
-        from config.firebase_init import db
+        # MongoDB operations handled by MongoDBService
         backend_url = os.getenv('BACKEND_URL', 'https://callbot-analytics.preview.emergentagent.com')
         
         if digits == '1':
@@ -537,7 +537,7 @@ async def infobip_status_webhook(call_id: str, request: Request):
         body = await request.json()
         status = body.get('status', '')
         
-        from config.firebase_init import db
+        # MongoDB operations handled by MongoDBService
         call_ref = db.collection('calls').document(call_id)
         if call_ref.get().exists:
             call_ref.update({'status': status.lower()})
