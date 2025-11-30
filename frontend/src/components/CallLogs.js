@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Button } from './ui/button';
-import { ScrollArea } from './ui/scroll-area';
-import { format } from 'date-fns';
 import { PhoneOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
