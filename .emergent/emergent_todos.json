@@ -5,23 +5,23 @@
   },
   {
     "content": "Create MongoDB connection and database models (users, calls, signalwire_numbers, payments, provider_config)",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Create Pydantic models with UUID IDs and timezone-aware datetimes",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Implement JWT-based authentication service (replace Firebase Auth)",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Create MongoDB service layer for CRUD operations",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Update all routes to use MongoDB instead of Firebase (auth, users, calls, webhooks, admin, payments)",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Seed initial admin user and SignalWire configuration in MongoDB",
