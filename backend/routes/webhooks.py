@@ -166,6 +166,7 @@ async def signalwire_webhook(call_id: str, request: Request):
     <Hangup/>
 </Response>"""
         
+        logger.info(f"✅ Returning TwiML for call {call_id}: {len(twiml)} bytes, answered_by={answered_by}")
         return Response(content=twiml, media_type="application/xml")
         
     except Exception as e:
