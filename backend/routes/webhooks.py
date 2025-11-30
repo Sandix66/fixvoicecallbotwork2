@@ -182,11 +182,24 @@ async def signalwire_webhook(call_id: str, request: Request):
         # Generate voice element (Deepgram or SignalWire)
         voice_element = await generate_voice_element(step_1_message, voice)
         
-        # Generate TwiML - SAMA untuk human atau voicemail (jangan auto hangup)
-        # User tetap bisa interact meskipun voicemail terdeteksi
-        twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+        # Check if voicemail detected - auto hangup after playing message
+        if answered_by in ['machine_start', 'machine_end_beep', 'machine_end_silence', 'machine']:
+            # Voicemail detected - Play 2x then HANGUP (no gather, no retry)
+            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    {voice_element}
+    <Pause length="2"/>
+    {voice_element}
+    <Hangup/>
+</Response>"""
+            logger.info(f"✅ Voicemail detected - Auto hangup after playing 2x")
+        else:
+            # Human/Unknown/Silent - Allow interaction with Gather
+            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="15">
+        {voice_element}
+        <Pause length="2"/>
         {voice_element}
     </Gather>
     <Redirect>{retry_url}</Redirect>
