@@ -83,12 +83,14 @@ export default function CallLogs({ events, activeCall }) {
 
       {/* Unified Call Information Panel */}
       <div className="glass-effect rounded-xl p-6 space-y-6">
-        {/* Status Section */}
+        {/* LIVE EVENTS Section */}
         <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-[#00FF7F] mb-4">LIVE EVENTS</h3>
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-gray-400 text-sm mb-1">Status:</p>
-              <p className="text-white font-semibold">{currentCall?.status || 'answered'}</p>
+              <p className="text-white font-semibold">{currentCall?.status || 'initiated'}</p>
             </div>
             <div>
               <p className="text-gray-400 text-sm mb-1">Answered By:</p>
@@ -103,7 +105,7 @@ export default function CallLogs({ events, activeCall }) {
             </div>
             <div>
               <p className="text-gray-400 text-sm mb-1">Recording URL:</p>
-              <div className="text-white font-semibold">{getRecordingUrl()}</div>
+              <div className="text-white font-semibold break-all">{getRecordingUrl()}</div>
             </div>
           </div>
 
