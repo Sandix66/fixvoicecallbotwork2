@@ -179,75 +179,31 @@ async def signalwire_webhook(call_id: str, request: Request):
         # For human/unknown - use longer timeout and allow retry
         retry_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/retry-step1"
         
-        # Check if using Deepgram voice
-        if deepgram.is_deepgram_voice(voice):
-            # Use Deepgram TTS to generate audio
-            try:
-                logger.info(f"🎙️ Generating Deepgram TTS for voice: {voice}")
-                audio_url = await deepgram.text_to_speech(step_1_message, voice)
-                logger.info(f"✅ Deepgram audio generated: {audio_url}")
-                
-                # Use <Play> instead of <Say> for Deepgram audio
-                if answered_by in ['human', 'unknown', '']:
-                    twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+        # Generate voice element (Deepgram or SignalWire)
+        voice_element = await generate_voice_element(step_1_message, voice)
+        
+        # Generate TwiML with appropriate voice
+        if answered_by in ['human', 'unknown', '']:
+            # Human detected - longer timeout
+            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="15">
-        <Play>{audio_url}</Play>
+        {voice_element}
     </Gather>
     <Redirect>{retry_url}</Redirect>
-</Response>"""
-                else:
-                    twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="10">
-        <Play>{audio_url}</Play>
-    </Gather>
-    <Play>{audio_url}</Play>
-    <Hangup/>
-</Response>"""
-            except Exception as e:
-                logger.error(f"❌ Deepgram TTS failed: {e}. Falling back to SignalWire TTS")
-                # Fallback to SignalWire TTS
-                if answered_by in ['human', 'unknown', '']:
-                    twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="15">
-        <Say voice="Aurora">{step_1_message}</Say>
-    </Gather>
-    <Redirect>{retry_url}</Redirect>
-</Response>"""
-                else:
-                    twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="10">
-        <Say voice="Aurora">{step_1_message}</Say>
-    </Gather>
-    <Say voice="Aurora">We did not receive any input. Goodbye.</Say>
-    <Hangup/>
 </Response>"""
         else:
-            # Use SignalWire built-in TTS
-            if answered_by in ['human', 'unknown', '']:
-                # Human detected - longer timeout
-                twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="15">
-        <Say voice="{voice}">{step_1_message}</Say>
-    </Gather>
-    <Redirect>{retry_url}</Redirect>
-</Response>"""
-            else:
-                # Machine detected - shorter timeout
-                twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+            # Machine detected - shorter timeout
+            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="10">
-        <Say voice="{voice}">{step_1_message}</Say>
+        {voice_element}
     </Gather>
-    <Say voice="{voice}">We did not receive any input. Goodbye.</Say>
+    {voice_element}
     <Hangup/>
 </Response>"""
         
-        logger.info(f"✅ Returning TwiML for call {call_id}: {len(twiml)} bytes, answered_by={answered_by}, voice={voice}")
+        logger.info(f"✅ Returning TwiML for call {call_id}: {len(twiml)} bytes, voice={voice}")
         return Response(content=twiml, media_type="application/xml")
         
     except Exception as e:
