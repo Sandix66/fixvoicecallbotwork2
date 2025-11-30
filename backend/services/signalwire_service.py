@@ -106,3 +106,51 @@ class SignalWireService:
         except Exception as e:
             logger.error(f"Error terminating call: {e}")
             return False
+    
+    async def list_phone_numbers(self):
+        """List all phone numbers in SignalWire account"""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.base_url}/api/laml/2010-04-01/Accounts/{self.project_id}/IncomingPhoneNumbers.json",
+                    auth=(self.project_id, self.token)
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    return data.get('incoming_phone_numbers', [])
+                else:
+                    logger.error(f"Failed to list phone numbers: {response.text}")
+                    return []
+        except Exception as e:
+            logger.error(f"Error listing phone numbers: {e}")
+            return []
+    
+    async def update_phone_webhook(self, phone_number_sid: str, voice_url: str, status_callback_url: str = None):
+        """Update webhook URL for a phone number"""
+        try:
+            update_data = {
+                'VoiceUrl': voice_url,
+                'VoiceMethod': 'POST'
+            }
+            
+            if status_callback_url:
+                update_data['StatusCallback'] = status_callback_url
+                update_data['StatusCallbackMethod'] = 'POST'
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.base_url}/api/laml/2010-04-01/Accounts/{self.project_id}/IncomingPhoneNumbers/{phone_number_sid}.json",
+                    auth=(self.project_id, self.token),
+                    data=update_data
+                )
+                
+                if response.status_code == 200:
+                    logger.info(f"Webhook updated for phone number {phone_number_sid}")
+                    return True
+                else:
+                    logger.error(f"Failed to update webhook: {response.text}")
+                    return False
+        except Exception as e:
+            logger.error(f"Error updating webhook: {e}")
+            return False
