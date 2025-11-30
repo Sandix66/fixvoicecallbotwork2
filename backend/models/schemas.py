@@ -86,6 +86,11 @@ class CallResponse(BaseModel):
     events: List[CallEvent]
     recording_url: Optional[str] = None
     created_at: str
+    language: Optional[str] = None
+    tts_voice: Optional[str] = None
+    digits: Optional[int] = None
+    otp_entered: Optional[str] = None
+    user_response: Optional[str] = None
 
 class CallControl(BaseModel):
     action: Literal["accept", "reject", "end"]
