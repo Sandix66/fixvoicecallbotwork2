@@ -424,9 +424,7 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
             'estimated_cost': estimated_cost,
             'reserved_amount': estimated_cost,
             'actual_cost': 0,
-            'billing_status': 'reserved'
-        }
-            'digits': call_data.digits,
+            'billing_status': 'reserved',
             'sip_domain': os.getenv('INFOBIP_SIP_DOMAIN', '81.23.254.103'),
             'sip_port': int(os.getenv('INFOBIP_SIP_PORT', '5061'))
         }
