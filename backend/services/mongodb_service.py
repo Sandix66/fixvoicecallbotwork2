@@ -326,7 +326,7 @@ class MongoDBService:
         config_data['provider_name'] = provider_name
         config_data['updated_at'] = datetime.now(timezone.utc).isoformat()
         
-        result = await db.provider_config.update_one(
+        await db.provider_config.update_one(
             {"provider_name": provider_name},
             {"$set": config_data},
             upsert=True
