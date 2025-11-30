@@ -27,8 +27,8 @@ class DeepgramService:
         Returns:
             URL to the generated audio file
         """
-        if not self.client:
-            raise Exception("Deepgram client not initialized - API key missing")
+        if not self.api_key:
+            raise Exception("Deepgram API key not configured")
         
         try:
             logger.info(f"🎙️ Generating Deepgram TTS: voice={voice}, text_length={len(text)}")
@@ -37,7 +37,7 @@ class DeepgramService:
             audio_id = str(uuid.uuid4())
             filename = os.path.join(self.audio_dir, f"{audio_id}.mp3")
             
-            # Use REST API directly for better control
+            # Use REST API directly
             async with httpx.AsyncClient() as client:
                 headers = {
                     "Authorization": f"Token {self.api_key}",
@@ -69,7 +69,7 @@ class DeepgramService:
             backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
             audio_url = f"{backend_url}/api/audio/deepgram/{audio_id}.mp3"
             
-            logger.info(f"✅ Deepgram TTS generated: {audio_url}")
+            logger.info(f"✅ Deepgram TTS URL: {audio_url}")
             return audio_url
             
         except Exception as e:
