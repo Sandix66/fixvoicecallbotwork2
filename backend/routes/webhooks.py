@@ -121,7 +121,7 @@ async def signalwire_webhook(call_id: str, request: Request):
                 amd_event = {
                     'time': datetime.utcnow().isoformat(),
                     'event': 'voicemail_detected',
-                    'message': '🤖 Voicemail Detected',
+                    'message': '📱 Voicemail Detected',
                     'data': {'answered_by': answered_by}
                 }
             elif answered_by == 'fax':
@@ -136,6 +136,13 @@ async def signalwire_webhook(call_id: str, request: Request):
                     'time': datetime.utcnow().isoformat(),
                     'event': 'silent_human_detected',
                     'message': '🔇 Silent Human detection',
+                    'data': {'answered_by': answered_by}
+                }
+            elif answered_by == 'no_answer' or answered_by == 'no-answer':
+                amd_event = {
+                    'time': datetime.utcnow().isoformat(),
+                    'event': 'unanswered_detected',
+                    'message': '📵 Unanswered detected',
                     'data': {'answered_by': answered_by}
                 }
             
