@@ -52,12 +52,15 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "relative z-50 max-h-[--radix-select-content-available-height] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-select-content-transform-origin]",
+        "relative z-[9999] max-h-96 min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        "bg-[rgba(15,15,20,0.98)] border-[rgba(0,255,127,0.3)] text-white backdrop-blur-xl",
+        "shadow-[0_10px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(0,255,127,0.2)]",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className
       )}
       position={position}
+      sideOffset={5}
       {...props}>
       <SelectScrollUpButton />
       <SelectPrimitive.Viewport
@@ -83,13 +86,16 @@ const SelectItem = React.forwardRef(({ className, children, ...props }, ref) => 
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex w-full cursor-pointer select-none items-center rounded-sm py-2.5 pl-3 pr-8 text-sm outline-none transition-colors",
+      "text-gray-300 hover:bg-[rgba(0,255,127,0.15)] hover:text-[#00FF7F] focus:bg-[rgba(0,255,127,0.15)] focus:text-[#00FF7F]",
+      "data-[state=checked]:bg-[rgba(0,255,127,0.2)] data-[state=checked]:text-[#00FF7F]",
+      "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     {...props}>
     <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
+        <Check className="h-4 w-4 text-[#00FF7F]" />
       </SelectPrimitive.ItemIndicator>
     </span>
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
