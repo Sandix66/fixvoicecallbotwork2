@@ -658,6 +658,8 @@ async def signalwire_status(call_id: str, request: Request):
         call_status = form_data.get('CallStatus', '').lower()
         recording_url = form_data.get('RecordingUrl')
         call_duration = form_data.get('CallDuration')
+        caller_name = form_data.get('CallerName', '')
+        caller_type = form_data.get('CallerType', '')
         
         logger.info(f"Status update for call {call_id}: {call_status}")
         
@@ -665,6 +667,37 @@ async def signalwire_status(call_id: str, request: Request):
         call_data = await MongoDBService.get_call(call_id)
         
         if call_data:
+            # Add carrier info event if available on first status update
+            if caller_type and call_data.get('status') == 'initiated':
+                carrier_event = {
+                    'time': datetime.utcnow().isoformat(),
+                    'event': 'carrier_detected',
+                    'message': f'📡 Carrier: {caller_name or "Unknown"} type {caller_type}',
+                    'data': {'caller_name': caller_name, 'caller_type': caller_type}
+                }
+                await MongoDBService.update_call_events(call_id, carrier_event)
+                await manager.send_to_user(call_data['user_id'], {
+                    'type': 'call_event',
+                    'call_id': call_id,
+                    'event': carrier_event
+                })
+            
+            # Add service info event
+            if call_status == 'in-progress' and not call_data.get('service_event_sent'):
+                service_event = {
+                    'time': datetime.utcnow().isoformat(),
+                    'event': 'service_info',
+                    'message': f'🔵 Service: {call_data.get("service_name", "Unknown")}',
+                    'data': {'service': call_data.get('service_name')}
+                }
+                await MongoDBService.update_call_events(call_id, service_event)
+                await MongoDBService.update_call_field(call_id, 'service_event_sent', True)
+                await manager.send_to_user(call_data['user_id'], {
+                    'type': 'call_event',
+                    'call_id': call_id,
+                    'event': service_event
+                })
+            
             # Create detailed event based on status
             event_message = None
             event_type = f'status_{call_status}'
@@ -691,7 +724,7 @@ async def signalwire_status(call_id: str, request: Request):
                 event_message = f'☎️ Call answered @ {datetime.utcnow().strftime("%H:%M:%S")}'
                 event_type = 'call_answered'
             elif call_status == 'initiated':
-                event_message = f'📱 Call initiated to {call_data.get("to_number")} from {call_data.get("from_number")}'
+                event_message = f'📱 Initiated call to {call_data.get("to_number")} from {call_data.get("from_number")}'
                 event_type = 'call_initiated'
             
             event = {
