@@ -227,13 +227,16 @@ async def signalwire_retry_step1(call_id: str):
         }
         await MongoDBService.update_call_events(call_id, msg_event)
         
+        # Generate voice element for retry
+        voice_element = await generate_voice_element(step_1_message, voice)
+        
         # Second attempt - then give up
         twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="15">
-        <Say voice="{voice}">{step_1_message}</Say>
+        {voice_element}
     </Gather>
-    <Say voice="{voice}">We did not receive any input. Goodbye.</Say>
+    <Say voice="Aurora">We did not receive any input. Goodbye.</Say>
     <Hangup/>
 </Response>"""
         return Response(content=twiml, media_type="application/xml")
