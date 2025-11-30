@@ -58,10 +58,9 @@ async def signalwire_webhook(call_id: str, request: Request):
         # Get messages - EXACT text from UI form (NO hardcoded text)
         step_1_message = call_data.get('step_1_message', 'Hello')
         
-        # Main webhook - Play Step 1 ONLY (EXACT text from UI)
-        # No additional hardcoded prompts
-        external_webhook_base = "https://piddly-tenable-frederic.ngrok-free.dev"
-        first_input_url = f"{external_webhook_base}/signalwire-first-input.php?call_id={call_id}"
+        # Main webhook - Play Step 1 Message
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        first_input_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/first-input"
         
         twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>

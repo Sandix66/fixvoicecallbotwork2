@@ -361,6 +361,15 @@ export default function CallManagement() {
 
       {/* RIGHT SIDE - CALL LOGS (NEW UNIFIED VIEW) */}
       <CallLogs events={liveEvents} activeCall={activeCall} />
+      
+      {/* LIVE CALL MONITOR MODAL */}
+      {showLiveMonitor && monitorCallId && (
+        <LiveCallMonitor
+          callId={monitorCallId}
+          callData={monitorCallData}
+          onClose={() => setShowLiveMonitor(false)}
+        />
+      )}
     </div>
   );
 }
