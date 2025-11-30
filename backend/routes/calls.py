@@ -360,11 +360,30 @@ async def deny_otp(call_id: str, current_user: dict = Depends(verify_token)):
 async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = Depends(verify_token)):
     """Initiate a spoofed call via SIP Direct (External SIP client will fetch params)"""
     try:
-        # Check user balance
-        cost_per_minute = float(os.getenv('CALL_COST_PER_MINUTE', '0.5'))
+        # CHECK SPOOFING PERMISSION
+        if not current_user.get('can_use_spoofing', False):
+            raise HTTPException(
+                status_code=403, 
+                detail="Access denied. You don't have permission to use spoofing feature. Contact admin."
+            )
         
-        if current_user['balance'] < cost_per_minute:
-            raise HTTPException(status_code=402, detail="Insufficient balance")
+        # Get spoofing cost configuration
+        spoofing_cost_per_minute = float(os.getenv('SPOOFING_COST_PER_MINUTE', '0.8'))
+        estimated_duration_minutes = 5  # Estimate 5 minutes per call
+        estimated_cost = spoofing_cost_per_minute * estimated_duration_minutes
+        
+        # Check user balance (need enough for estimated cost)
+        if current_user['balance'] < estimated_cost:
+            raise HTTPException(
+                status_code=402, 
+                detail=f"Insufficient balance. Need at least ${estimated_cost} for estimated {estimated_duration_minutes} minutes spoofing call."
+            )
+        
+        # Reserve/hold credit - deduct estimated cost immediately
+        new_balance = current_user['balance'] - estimated_cost
+        await MongoDBService.update_user_balance(current_user['uid'], new_balance)
+        
+        logger.info(f"💰 Reserved ${estimated_cost} (SPOOFING) from user {current_user['uid']} balance. New balance: ${new_balance}")
         
         # Replace variables in messages
         def replace_vars(text):
