@@ -147,31 +147,17 @@ export default function CallLogs({ events, activeCall }) {
                 <p className="text-white">{currentCall?.digits || 6}</p>
               </div>
               <div>
-                <p className="text-gray-400 text-sm mb-1">Card Type:</p>
-                <p className="text-white">{currentCall?.card_type || '-'}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Bank Name:</p>
-                <p className="text-white">{currentCall?.bank_name || '-'}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Card Ending:</p>
-                <p className="text-white">{currentCall?.card_ending || '-'}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
                 <p className="text-gray-400 text-sm mb-1">Language:</p>
                 <p className="text-white">{currentCall?.language || 'en-US'}</p>
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-gray-400 text-sm mb-1">Voice:</p>
                 <p className="text-white">{currentCall?.tts_voice || 'Aurora'}</p>
               </div>
+              <div></div>
             </div>
           </div>
         </div>
