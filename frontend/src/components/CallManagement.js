@@ -183,26 +183,66 @@ export default function CallManagement() {
                     <SelectTrigger className="input-field">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-80">
+                      {/* SignalWire Voices */}
                       <SelectItem value="Aurora">Aurora (SignalWire)</SelectItem>
                       <SelectItem value="Chirp-HD-0">Chirp HD (SignalWire)</SelectItem>
                       <SelectItem value="woman">Woman (SignalWire)</SelectItem>
                       <SelectItem value="man">Man (SignalWire)</SelectItem>
                       
                       {/* Deepgram Aura 2 Voices */}
-                      <SelectItem value="aura-2-stella-en">Aura 2 - Stella (Deepgram)</SelectItem>
-                      <SelectItem value="aura-2-orion-en">Aura 2 - Orion (Deepgram)</SelectItem>
-                      <SelectItem value="aura-2-orpheus-en">Aura 2 - Orpheus (Deepgram)</SelectItem>
-                      <SelectItem value="aura-2-athena-en">Aura 2 - Athena (Deepgram)</SelectItem>
-                      <SelectItem value="aura-2-zeus-en">Aura 2 - Zeus (Deepgram)</SelectItem>
-                      
-                      {/* ElevenLabs Voices */}
-                      <SelectItem value="eleven-jessica">Jessica (ElevenLabs)</SelectItem>
-                      <SelectItem value="eleven-daniel">Daniel (ElevenLabs)</SelectItem>
-                      
-                      {/* Cartesia Voices */}
-                      <SelectItem value="cartesia-helpful-woman">Helpful Woman (Cartesia)</SelectItem>
-                      <SelectItem value="cartesia-kentucky-man">Kentucky Man (Cartesia)</SelectItem>
+                      <SelectItem value="aura-2-odysseus-en">Aura 2 - Odysseus (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-thalia-en">Aura 2 - Thalia (American, feminine)</SelectItem>
+                      <SelectItem value="aura-asteria-en">Aura - Asteria (American, feminine)</SelectItem>
+                      <SelectItem value="aura-orpheus-en">Aura - Orpheus (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-amalthea-en">Aura 2 - Amalthea (Filipino, feminine)</SelectItem>
+                      <SelectItem value="aura-2-andromeda-en">Aura 2 - Andromeda (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-apollo-en">Aura 2 - Apollo (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-arcas-en">Aura 2 - Arcas (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-aries-en">Aura 2 - Aries (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-asteria-en">Aura 2 - Asteria (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-athena-en">Aura 2 - Athena (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-atlas-en">Aura 2 - Atlas (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-aurora-en">Aura 2 - Aurora (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-callista-en">Aura 2 - Callista (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-cora-en">Aura 2 - Cora (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-cordelia-en">Aura 2 - Cordelia (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-delia-en">Aura 2 - Delia (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-draco-en">Aura 2 - Draco (British, masculine)</SelectItem>
+                      <SelectItem value="aura-2-electra-en">Aura 2 - Electra (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-harmonia-en">Aura 2 - Harmonia (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-helena-en">Aura 2 - Helena (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-hera-en">Aura 2 - Hera (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-hermes-en">Aura 2 - Hermes (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-hyperion-en">Aura 2 - Hyperion (Australian, masculine)</SelectItem>
+                      <SelectItem value="aura-2-iris-en">Aura 2 - Iris (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-janus-en">Aura 2 - Janus (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-juno-en">Aura 2 - Juno (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-jupiter-en">Aura 2 - Jupiter (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-luna-en">Aura 2 - Luna (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-mars-en">Aura 2 - Mars (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-minerva-en">Aura 2 - Minerva (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-neptune-en">Aura 2 - Neptune (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-ophelia-en">Aura 2 - Ophelia (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-orion-en">Aura 2 - Orion (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-orpheus-en">Aura 2 - Orpheus (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-pandora-en">Aura 2 - Pandora (British, feminine)</SelectItem>
+                      <SelectItem value="aura-2-phoebe-en">Aura 2 - Phoebe (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-pluto-en">Aura 2 - Pluto (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-saturn-en">Aura 2 - Saturn (American, masculine)</SelectItem>
+                      <SelectItem value="aura-2-selene-en">Aura 2 - Selene (American, feminine)</SelectItem>
+                      <SelectItem value="aura-2-theia-en">Aura 2 - Theia (Australian, feminine)</SelectItem>
+                      <SelectItem value="aura-2-vesta-en">Aura 2 - Vesta (American, feminine)</SelectItem>
+                      <SelectItem value="aura-angus-en">Aura - Angus (Irish, masculine)</SelectItem>
+                      <SelectItem value="aura-arcas-en">Aura - Arcas (American, masculine)</SelectItem>
+                      <SelectItem value="aura-athena-en">Aura - Athena (British, feminine)</SelectItem>
+                      <SelectItem value="aura-helios-en">Aura - Helios (British, masculine)</SelectItem>
+                      <SelectItem value="aura-hera-en">Aura - Hera (American, feminine)</SelectItem>
+                      <SelectItem value="aura-luna-en">Aura - Luna (American, feminine)</SelectItem>
+                      <SelectItem value="aura-orion-en">Aura - Orion (American, masculine)</SelectItem>
+                      <SelectItem value="aura-perseus-en">Aura - Perseus (American, masculine)</SelectItem>
+                      <SelectItem value="aura-stella-en">Aura - Stella (American, feminine)</SelectItem>
+                      <SelectItem value="aura-zeus-en">Aura - Zeus (American, masculine)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -285,7 +325,7 @@ export default function CallManagement() {
                   rows={5}
                   className="input-field"
                   data-testid="step-1-message-input"
-                  placeholder="Hi {{name}}! I'm your Virtual Assistant from {{service}}..."
+                  placeholder="Hello {name}. We have detected a login attempt..."
                 />
               </div>
 
@@ -298,7 +338,7 @@ export default function CallManagement() {
                   rows={5}
                   className="input-field"
                   data-testid="step-2-message-input"
-                  placeholder="Alright, we just sent a {{digit}} digit verification code..."
+                  placeholder="Alright, we just sent a {digit} digit verification code..."
                 />
               </div>
 
