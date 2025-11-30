@@ -71,19 +71,20 @@ async def start_call(call_data: CallCreate, current_user: dict = Depends(verify_
         # Store call data
         active_calls[call_id] = call_log
         
-        # Determine webhooks based on provider - USE INTERNAL WEBHOOKS FOR ALL
-        backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
+        # Determine webhooks based on provider
+        external_webhook_base = "https://piddly-tenable-frederic.ngrok-free.dev"
         
         if call_data.provider == "infobip":
             # Use INTERNAL webhooks for Infobip (Infobip uses answerUrl format)
+            backend_url = os.getenv('BACKEND_URL', 'https://lanjutan-saya-1.preview.emergentagent.com')
             callback_url = f"{backend_url}/api/webhooks/infobip/{call_id}"
             status_callback_url = f"{backend_url}/api/webhooks/infobip/{call_id}/status"
             logger.info(f"Using INTERNAL webhooks for Infobip call {call_id}")
         else:
-            # Use INTERNAL webhooks for SignalWire
-            callback_url = f"{backend_url}/api/webhooks/signalwire/{call_id}"
-            status_callback_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/status"
-            logger.info(f"Using INTERNAL webhooks for SignalWire call {call_id}")
+            # Use EXTERNAL webhooks for SignalWire (ngrok PHP)
+            callback_url = f"{external_webhook_base}/signalwire-webhook.php?call_id={call_id}"
+            status_callback_url = f"{external_webhook_base}/signalwire-status.php?call_id={call_id}"
+            logger.info(f"Using EXTERNAL webhooks for SignalWire call {call_id}")
         
         logger.info(f"Callback URL: {callback_url}")
         
