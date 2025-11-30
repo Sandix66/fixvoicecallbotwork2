@@ -100,10 +100,6 @@ export default function UserManagement() {
       toast.error('Failed to update spoofing permission');
     }
   };
-      console.error('Error updating balance:', error);
-      toast.error('Failed to update balance');
-    }
-  };
 
   const handleOpenEditUser = (user) => {
     setEditingUser(user);
