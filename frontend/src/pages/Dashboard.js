@@ -11,35 +11,44 @@ import Settings from '../components/Settings';
 import wsService from '../services/websocket';
 
 export default function Dashboard() {
-  const { currentUser, userProfile, signOut } = useAuth();
+  const { currentUser, userProfile, signOut, getToken } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('calls');
   const [callEvents, setCallEvents] = useState([]);
+  const [wsConnected, setWsConnected] = useState(false);
 
   useEffect(() => {
-    if (!currentUser) {
+    // Check authentication
+    const token = getToken();
+    if (!token || !currentUser) {
       navigate('/login');
       return;
     }
 
-    // Connect WebSocket
-    if (userProfile) {
-      wsService.connect(userProfile.uid);
+    // Connect WebSocket only when userProfile is available
+    if (userProfile && !wsConnected) {
+      try {
+        wsService.connect(userProfile.uid);
+        setWsConnected(true);
 
-      // Listen for call events
-      const handleCallEvent = (data) => {
-        console.log('Call event received:', data);
-        setCallEvents(prev => [data, ...prev]);
-      };
+        // Listen for call events
+        const handleCallEvent = (data) => {
+          console.log('Call event received:', data);
+          setCallEvents(prev => [data, ...prev]);
+        };
 
-      wsService.on('call_event', handleCallEvent);
+        wsService.on('call_event', handleCallEvent);
 
-      return () => {
-        wsService.off('call_event', handleCallEvent);
-        wsService.disconnect();
-      };
+        return () => {
+          wsService.off('call_event', handleCallEvent);
+          wsService.disconnect();
+          setWsConnected(false);
+        };
+      } catch (error) {
+        console.error('WebSocket connection error:', error);
+      }
     }
-  }, [currentUser, userProfile, navigate]);
+  }, [currentUser, userProfile, navigate, getToken, wsConnected]);
 
   const handleLogout = async () => {
     try {
