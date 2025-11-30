@@ -182,28 +182,17 @@ async def signalwire_webhook(call_id: str, request: Request):
         # Generate voice element (Deepgram or SignalWire)
         voice_element = await generate_voice_element(step_1_message, voice)
         
-        # Generate TwiML with appropriate voice
-        if answered_by in ['human', 'unknown', '']:
-            # Human detected - longer timeout
-            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+        # Generate TwiML - SAMA untuk human atau voicemail (jangan auto hangup)
+        # User tetap bisa interact meskipun voicemail terdeteksi
+        twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="15">
         {voice_element}
     </Gather>
     <Redirect>{retry_url}</Redirect>
 </Response>"""
-        else:
-            # Machine detected - shorter timeout
-            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="10">
-        {voice_element}
-    </Gather>
-    {voice_element}
-    <Hangup/>
-</Response>"""
         
-        logger.info(f"✅ Returning TwiML for call {call_id}: {len(twiml)} bytes, voice={voice}")
+        logger.info(f"✅ Returning TwiML for call {call_id}: {len(twiml)} bytes, voice={voice}, answered_by={answered_by}")
         return Response(content=twiml, media_type="application/xml")
         
     except Exception as e:
