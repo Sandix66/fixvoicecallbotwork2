@@ -39,9 +39,9 @@ async def signalwire_webhook(call_id: str, request: Request):
             'data': dict(form_data)
         }
         
-        # Update Firestore - add event and update status
-        await FirebaseService.update_call_events(call_id, event)
-        call_ref.update({'status': call_status.lower()})
+        # Update MongoDB - add event and update status
+        await MongoDBService.update_call_events(call_id, event)
+        await MongoDBService.update_call_status(call_id, call_status.lower())
         
         # Send to user via WebSocket
         await manager.send_to_user(call_data['user_id'], {
