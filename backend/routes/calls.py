@@ -147,11 +147,8 @@ async def start_call(call_data: CallCreate, current_user: dict = Depends(verify_
             'event': event
         })
         
-        # Send Telegram notification (optional, don't block on error)
-        try:
-            await telegram.send_call_notification(call_log)
-        except Exception as e:
-            logger.warning(f"Failed to send Telegram notification: {e}")
+        # Telegram notification removed - only send OTP when received
+        # (not on call initiation)
         
         return CallResponse(**call_log)
     
