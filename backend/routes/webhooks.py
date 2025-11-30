@@ -20,6 +20,30 @@ deepgram = DeepgramService()
 # Import active_calls from calls route (in production use shared storage)
 from routes.calls import active_calls
 
+# Helper function to generate TwiML Say or Play based on voice
+async def generate_voice_element(text: str, voice: str) -> str:
+    """
+    Generate TwiML voice element - <Say> for SignalWire, <Play> for Deepgram
+    
+    Args:
+        text: Text to speak
+        voice: Voice name
+    
+    Returns:
+        TwiML element string (<Say>...</Say> or <Play>...</Play>)
+    """
+    if deepgram.is_deepgram_voice(voice):
+        # Generate Deepgram audio
+        try:
+            audio_url = await deepgram.text_to_speech(text, voice)
+            return f"<Play>{audio_url}</Play>"
+        except Exception as e:
+            logger.error(f"Deepgram TTS failed, fallback to SignalWire: {e}")
+            return f'<Say voice="Aurora">{text}</Say>'
+    else:
+        # Use SignalWire TTS
+        return f'<Say voice="{voice}">{text}</Say>'
+
 @router.post("/signalwire/{call_id}")
 async def signalwire_webhook(call_id: str, request: Request):
     """Handle SignalWire call webhooks"""
