@@ -77,6 +77,34 @@ async def signalwire_webhook(call_id: str, request: Request):
         # For human/unknown - use longer timeout and allow retry
         retry_url = f"{backend_url}/api/webhooks/signalwire/{call_id}/retry-step1"
         
+        if AnsweredBy in ['human', 'unknown', '']:
+            # Human detected - longer timeout
+            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="15">
+        <Say voice="{voice}">{step_1_message}</Say>
+    </Gather>
+    <Redirect>{retry_url}</Redirect>
+</Response>"""
+        else:
+            # Machine detected - shorter timeout
+            twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather numDigits="1" action="{first_input_url}" method="POST" timeout="10">
+        <Say voice="{voice}">{step_1_message}</Say>
+    </Gather>
+    <Say voice="{voice}">We did not receive any input. Goodbye.</Say>
+    <Hangup/>
+</Response>"""
+        
+        return Response(content=twiml, media_type="application/xml")
+        
+    except Exception as e:
+        logger.error(f"Webhook error: {e}")
+        return Response(
+            content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Error</Say><Hangup/></Response>',
+            media_type="application/xml"
+        )
 
 @router.post("/signalwire/{call_id}/retry-step1")
 async def signalwire_retry_step1(call_id: str):

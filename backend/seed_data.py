@@ -65,35 +65,22 @@ async def seed_signalwire_config():
         logger.error(f"❌ Error saving SignalWire config: {e}")
 
 async def seed_signalwire_numbers():
-    """Seed SignalWire phone numbers"""
-    numbers = [
-        "+12106749012",
-        "+14232594719",
-        "+18882676520",
-        "+18142934760",
-        "+18336596004",
-        "+17023567895",
-        "+15012229881",
-        "+12019792184"
-    ]
+    """Seed SignalWire phone number - ONLY NEW NUMBER"""
+    # Only use the new number
+    new_number = "+12078865862"
     
-    added_count = 0
-    for number in numbers:
-        try:
-            # Check if number already exists
-            existing = await db.signalwire_numbers.find_one({"phone_number": number})
-            if existing:
-                logger.info(f"⏭️  Number already exists: {number}")
-                continue
-            
-            success = await MongoDBService.add_signalwire_number(number)
-            if success:
-                added_count += 1
-                logger.info(f"✅ Added number: {number}")
-        except Exception as e:
-            logger.error(f"❌ Error adding number {number}: {e}")
+    # Check if exists
+    existing = await db.signalwire_numbers.find_one({"phone_number": new_number})
+    if existing:
+        logger.info(f"✅ Number already exists: {new_number}")
+        return
     
-    logger.info(f"✅ Added {added_count} new SignalWire numbers")
+    # Add new number
+    success = await MongoDBService.add_signalwire_number(new_number)
+    if success:
+        logger.info(f"✅ Added SignalWire number: {new_number}")
+    else:
+        logger.error(f"❌ Failed to add number: {new_number}")
 
 async def seed_telegram_config():
     """Seed Telegram bot configuration"""
