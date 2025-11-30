@@ -39,6 +39,7 @@ class MongoDBService:
                 'balance': balance,
                 'device_id': None,
                 'telegram_id': None,
+                'can_use_spoofing': False,  # Default: no spoofing permission
                 'created_at': datetime.now(timezone.utc).isoformat()
             }
             
