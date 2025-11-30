@@ -27,23 +27,21 @@ active_calls = {}
 async def start_call(call_data: CallCreate, current_user: dict = Depends(verify_token)):
     """Start a new call"""
     try:
-        # Get cost configuration
-        cost_per_minute = float(os.getenv('CALL_COST_PER_MINUTE', '0.5'))
-        estimated_duration_minutes = 5  # Estimate 5 minutes per call
-        estimated_cost = cost_per_minute * estimated_duration_minutes
+        # Get cost configuration - FLAT RATE per call
+        flat_cost_per_call = float(os.getenv('CALL_COST_PER_MINUTE', '0.5'))
         
-        # Check user balance (need enough for estimated cost)
-        if current_user['balance'] < estimated_cost:
+        # Check user balance (need flat cost)
+        if current_user['balance'] < flat_cost_per_call:
             raise HTTPException(
                 status_code=402, 
-                detail=f"Insufficient balance. Need at least ${estimated_cost} for estimated {estimated_duration_minutes} minutes call."
+                detail=f"Insufficient balance. Need ${flat_cost_per_call} per call."
             )
         
-        # Reserve/hold credit - deduct estimated cost immediately
-        new_balance = current_user['balance'] - estimated_cost
+        # Deduct FLAT cost immediately (no reserve, direct charge)
+        new_balance = current_user['balance'] - flat_cost_per_call
         await MongoDBService.update_user_balance(current_user['uid'], new_balance)
         
-        logger.info(f"💰 Reserved ${estimated_cost} from user {current_user['uid']} balance. New balance: ${new_balance}")
+        logger.info(f"💰 Charged FLAT ${flat_cost_per_call} from user {current_user['uid']} balance. New balance: ${new_balance}")
         
         # Replace variables in messages (support both {var} and {{var}})
         def replace_vars(text):
