@@ -232,6 +232,7 @@ export default function UserManagement() {
                 <th className="text-left py-3 px-4 text-sm font-semibold text-[#00FF7F]">Email</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-[#00FF7F]">Role</th>
                 <th className="text-left py-3 px-4 text-sm font-semibold text-[#00FF7F]">Balance</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-[#00FF7F]">Spoofing</th>
                 <th className="text-right py-3 px-4 text-sm font-semibold text-[#00FF7F]">Actions</th>
               </tr>
             </thead>
@@ -248,6 +249,18 @@ export default function UserManagement() {
                     </span>
                   </td>
                   <td className="py-3 px-4 text-white font-semibold">${user.balance?.toFixed(2)}</td>
+                  <td className="py-3 px-4">
+                    <button
+                      onClick={() => handleToggleSpoofing(user.uid, user.can_use_spoofing)}
+                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                        user.can_use_spoofing 
+                          ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30' 
+                          : 'bg-red-600/20 text-red-400 hover:bg-red-600/30'
+                      }`}
+                    >
+                      {user.can_use_spoofing ? '✅ Enabled' : '🚫 Disabled'}
+                    </button>
+                  </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-end gap-2">
                       <Button
