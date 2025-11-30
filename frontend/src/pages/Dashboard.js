@@ -11,25 +11,24 @@ import Settings from '../components/Settings';
 import wsService from '../services/websocket';
 
 export default function Dashboard() {
-  const { currentUser, userProfile, signOut, getToken } = useAuth();
+  const { currentUser, userProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('calls');
   const [callEvents, setCallEvents] = useState([]);
-  const [wsConnected, setWsConnected] = useState(false);
 
   useEffect(() => {
     // Check authentication
-    const token = getToken();
-    if (!token || !currentUser) {
+    if (!currentUser) {
       navigate('/login');
       return;
     }
+  }, [currentUser, navigate]);
 
+  useEffect(() => {
     // Connect WebSocket only when userProfile is available
-    if (userProfile && !wsConnected) {
+    if (userProfile) {
       try {
         wsService.connect(userProfile.uid);
-        setWsConnected(true);
 
         // Listen for call events
         const handleCallEvent = (data) => {
@@ -42,13 +41,12 @@ export default function Dashboard() {
         return () => {
           wsService.off('call_event', handleCallEvent);
           wsService.disconnect();
-          setWsConnected(false);
         };
       } catch (error) {
         console.error('WebSocket connection error:', error);
       }
     }
-  }, [currentUser, userProfile, navigate, getToken, wsConnected]);
+  }, [userProfile]);
 
   const handleLogout = async () => {
     try {
