@@ -197,22 +197,72 @@ export default function CallLogs({ events, activeCall }) {
 
         {/* Call Info Footer */}
         {currentCall && (
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-700">
-            <div>
-              <span className="text-gray-500 text-sm">Status:</span>
-              <span className="text-green-400 ml-2 font-medium uppercase text-sm">
-                {currentCall.status || 'INITIATED'}
-              </span>
+          <>
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-700">
+              <div>
+                <span className="text-gray-500 text-sm">Status:</span>
+                <span className="text-green-400 ml-2 font-medium uppercase text-sm">
+                  {currentCall.status || 'INITIATED'}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500 text-sm">From:</span>
+                <span className="text-white ml-2 text-sm">{currentCall.from_number}</span>
+              </div>
+              <div>
+                <span className="text-gray-500 text-sm">To:</span>
+                <span className="text-white ml-2 text-sm">{currentCall.to_number}</span>
+              </div>
             </div>
-            <div>
-              <span className="text-gray-500 text-sm">From:</span>
-              <span className="text-white ml-2 text-sm">{currentCall.from_number}</span>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">To:</span>
-              <span className="text-white ml-2 text-sm">{currentCall.to_number}</span>
-            </div>
-          </div>
+
+            {/* Call Recording Player */}
+            {currentCall.recording_url && (
+              <div className="pt-4 border-t border-gray-700">
+                <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border-2 border-purple-500/50 rounded-lg p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-2xl">🎙️</span>
+                    <div className="flex-1">
+                      <h4 className="text-purple-300 font-semibold">Call Recording</h4>
+                      <p className="text-gray-400 text-xs">Listen to the conversation between bot and target</p>
+                    </div>
+                  </div>
+                  <audio 
+                    controls 
+                    className="w-full"
+                    style={{
+                      height: '40px',
+                      backgroundColor: '#1a1a1a',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <source src={currentCall.recording_url} type="audio/mpeg" />
+                    <source src={currentCall.recording_url} type="audio/wav" />
+                    Your browser does not support the audio element.
+                  </audio>
+                  <div className="mt-2 flex items-center gap-2">
+                    <a 
+                      href={currentCall.recording_url} 
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 text-sm underline"
+                    >
+                      📥 Download Recording
+                    </a>
+                    <span className="text-gray-600 text-xs">•</span>
+                    <a 
+                      href={currentCall.recording_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 text-sm underline"
+                    >
+                      🔗 Open in New Tab
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Action Buttons */}
