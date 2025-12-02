@@ -156,11 +156,20 @@ export default function Spoofing() {
                   <SelectTrigger className="input-field">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Aurora">Aurora (Neural)</SelectItem>
-                    <SelectItem value="Chirp">Chirp HD</SelectItem>
-                    <SelectItem value="woman">Woman</SelectItem>
-                    <SelectItem value="man">Man</SelectItem>
+                  <SelectContent className="max-h-80">
+                    {/* Deepgram Aura Voices (REQUIRED for Spoofing) */}
+                    <SelectItem value="aura-asteria-en">Aura - Asteria (American, feminine)</SelectItem>
+                    <SelectItem value="aura-luna-en">Aura - Luna (American, feminine)</SelectItem>
+                    <SelectItem value="aura-stella-en">Aura - Stella (American, feminine)</SelectItem>
+                    <SelectItem value="aura-athena-en">Aura - Athena (British, feminine)</SelectItem>
+                    <SelectItem value="aura-hera-en">Aura - Hera (American, feminine)</SelectItem>
+                    <SelectItem value="aura-orion-en">Aura - Orion (American, masculine)</SelectItem>
+                    <SelectItem value="aura-arcas-en">Aura - Arcas (American, masculine)</SelectItem>
+                    <SelectItem value="aura-perseus-en">Aura - Perseus (American, masculine)</SelectItem>
+                    <SelectItem value="aura-angus-en">Aura - Angus (Irish, masculine)</SelectItem>
+                    <SelectItem value="aura-orpheus-en">Aura - Orpheus (American, masculine)</SelectItem>
+                    <SelectItem value="aura-helios-en">Aura - Helios (British, masculine)</SelectItem>
+                    <SelectItem value="aura-zeus-en">Aura - Zeus (American, masculine)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
