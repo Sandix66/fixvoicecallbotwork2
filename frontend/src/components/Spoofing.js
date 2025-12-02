@@ -14,10 +14,10 @@ export default function Spoofing() {
   const [liveEvents, setLiveEvents] = useState([]);
   const [activeCall, setActiveCall] = useState(null);
   const [formData, setFormData] = useState({
-    from_number: '',
+    from_number: '+10000000000',  // Default dummy number (will be ignored by Asterisk)
     to_number: '',
     spoofed_caller_id: '',
-    from_display_name: '',
+    from_display_name: 'Spoofed Call',  // Default display name (will be ignored)
     recipient_name: '',
     service_name: '',
     provider: 'infobip_sip',
