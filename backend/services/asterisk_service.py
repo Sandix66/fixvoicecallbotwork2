@@ -88,7 +88,12 @@ class AsteriskService:
                         logger.error(f"Sox conversion error: {convert_error}")
                         raise Exception(f"Sox conversion failed for {step_name}: {convert_error}")
                     
-                    # Verify WAV file created
+                    # Fix ownership - CRITICAL! Asterisk runs as 'asterisk' user
+                    chown_cmd = f"chown asterisk:asterisk {remote_mp3_path} {remote_wav_path}"
+                    stdin, stdout, stderr = ssh_client.exec_command(chown_cmd)
+                    stdout.read()
+                    
+                    # Verify WAV file created and accessible
                     try:
                         wav_stat = sftp.stat(remote_wav_path)
                         logger.info(f"✅ Converted {step_name}: MP3 ({len(audio_bytes)}b) → WAV ({wav_stat.st_size}b)")
