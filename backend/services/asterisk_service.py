@@ -67,27 +67,34 @@ class AsteriskService:
                     remote_mp3_path = f"{self.audio_dir}/{remote_filename}.mp3"
                     remote_wav_path = f"{self.audio_dir}/{remote_filename}.wav"
                     
-                    # Write MP3 audio to remote file
+                    # Write MP3 audio to remote file with .mp3 extension
                     with sftp.file(remote_mp3_path, 'wb') as f:
                         f.write(audio_bytes)
                     
                     sftp.chmod(remote_mp3_path, 0o644)
                     
+                    logger.info(f"✅ Uploaded MP3: {remote_mp3_path} ({len(audio_bytes)} bytes)")
+                    
                     # Convert MP3 to WAV using sox (Asterisk compatible)
+                    # CRITICAL: Input file MUST have .mp3 extension for sox to detect format!
                     convert_cmd = f"sox {remote_mp3_path} -r 8000 -c 1 -b 16 {remote_wav_path}"
                     stdin, stdout, stderr = ssh_client.exec_command(convert_cmd)
+                    
+                    # Wait for conversion to complete
+                    stdout.read()
                     convert_error = stderr.read().decode()
                     
-                    if convert_error and 'FAIL' in convert_error:
-                        logger.error(f"Sox conversion failed: {convert_error}")
-                        raise Exception(f"Failed to convert {step_name} to WAV")
+                    if convert_error and ('FAIL' in convert_error or 'error' in convert_error.lower()):
+                        logger.error(f"Sox conversion error: {convert_error}")
+                        raise Exception(f"Sox conversion failed for {step_name}: {convert_error}")
                     
                     # Verify WAV file created
                     try:
                         wav_stat = sftp.stat(remote_wav_path)
                         logger.info(f"✅ Converted {step_name}: MP3 ({len(audio_bytes)}b) → WAV ({wav_stat.st_size}b)")
-                    except:
-                        raise Exception(f"WAV file not found after conversion: {remote_wav_path}")
+                    except Exception as e:
+                        logger.error(f"WAV file not found after conversion: {e}")
+                        raise Exception(f"WAV file not created: {remote_wav_path}")
                     
                     # Store path without extension (Asterisk adds format automatically)
                     audio_paths[step_name] = f"custom/{remote_filename}"
