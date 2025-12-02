@@ -38,14 +38,14 @@ class AsteriskService:
     
     async def upload_audio_files(self, call_id: str, audio_files: dict) -> dict:
         """
-        Upload pre-generated audio files to Asterisk VPS
+        Upload pre-generated audio files to Asterisk VPS and convert to WAV
         
         Args:
             call_id: Unique call identifier
-            audio_files: Dict with keys (step_1, step_2, step_3, accepted, rejected) -> audio bytes
+            audio_files: Dict with keys (step_1, step_2, step_3, accepted, rejected) -> audio bytes (MP3)
         
         Returns:
-            Dict with audio file paths on VPS
+            Dict with audio file paths on VPS (WAV format)
         """
         try:
             ssh_client = self._create_ssh_client()
@@ -60,22 +60,39 @@ class AsteriskService:
                 stdin, stdout, stderr = ssh_client.exec_command(f"mkdir -p {self.audio_dir}")
                 stdout.read()
             
-            # Upload each audio file
+            # Upload each audio file and convert MP3 to WAV
             for step_name, audio_bytes in audio_files.items():
                 if audio_bytes:
                     remote_filename = f"{call_id}_{step_name}"
-                    remote_path = f"{self.audio_dir}/{remote_filename}"
+                    remote_mp3_path = f"{self.audio_dir}/{remote_filename}.mp3"
+                    remote_wav_path = f"{self.audio_dir}/{remote_filename}.wav"
                     
-                    # Write audio to remote file
-                    with sftp.file(remote_path, 'wb') as f:
+                    # Write MP3 audio to remote file
+                    with sftp.file(remote_mp3_path, 'wb') as f:
                         f.write(audio_bytes)
                     
-                    sftp.chmod(remote_path, 0o644)
+                    sftp.chmod(remote_mp3_path, 0o644)
                     
-                    # Store path without extension (Asterisk adds .mp3 automatically)
+                    # Convert MP3 to WAV using sox (Asterisk compatible)
+                    convert_cmd = f"sox {remote_mp3_path} -r 8000 -c 1 -b 16 {remote_wav_path}"
+                    stdin, stdout, stderr = ssh_client.exec_command(convert_cmd)
+                    convert_error = stderr.read().decode()
+                    
+                    if convert_error and 'FAIL' in convert_error:
+                        logger.error(f"Sox conversion failed: {convert_error}")
+                        raise Exception(f"Failed to convert {step_name} to WAV")
+                    
+                    # Verify WAV file created
+                    try:
+                        wav_stat = sftp.stat(remote_wav_path)
+                        logger.info(f"✅ Converted {step_name}: MP3 ({len(audio_bytes)}b) → WAV ({wav_stat.st_size}b)")
+                    except:
+                        raise Exception(f"WAV file not found after conversion: {remote_wav_path}")
+                    
+                    # Store path without extension (Asterisk adds format automatically)
                     audio_paths[step_name] = f"custom/{remote_filename}"
                     
-                    logger.info(f"✅ Uploaded {step_name}: {remote_path} ({len(audio_bytes)} bytes)")
+                    logger.info(f"✅ Uploaded {step_name}: {remote_wav_path}")
             
             sftp.close()
             ssh_client.close()
@@ -83,7 +100,7 @@ class AsteriskService:
             return audio_paths
             
         except Exception as e:
-            logger.error(f"Error uploading audio files: {e}")
+            logger.error(f"Error uploading/converting audio files: {e}")
             raise
     
     async def make_spoofed_call(
