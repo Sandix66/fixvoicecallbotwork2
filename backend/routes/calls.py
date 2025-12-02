@@ -427,6 +427,10 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
         logger.info(f"📞 SIP Spoofed call created: {call_id}")
         logger.info(f"   Spoofed: {call_data.spoofed_caller_id} -> {call_data.to_number}")
         
+        # Generate webhook URL for Asterisk to call back
+        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
+        webhook_url = f"{backend_url}/api/webhooks/asterisk/{call_id}"
+        
         # Initiate call via Asterisk on VPS
         from services.asterisk_service import AsteriskService
         asterisk = AsteriskService()
@@ -435,7 +439,8 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
             success = await asterisk.make_spoofed_call(
                 target_number=call_data.to_number,
                 spoofed_caller_id=call_data.spoofed_caller_id,
-                call_id=call_id
+                call_id=call_id,
+                webhook_url=webhook_url
             )
             
             if success:
