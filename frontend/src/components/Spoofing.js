@@ -22,7 +22,7 @@ export default function Spoofing() {
     service_name: '',
     provider: 'infobip_sip',
     language: 'en-US',
-    tts_voice: 'Aurora',
+    tts_voice: 'aura-asteria-en',  // Deepgram voice required for spoofing!
     digits: 6,
     step_1_message: 'Hello {name}. We have detected a login attempt to your {service} account from a new device or location.\nIf you did not recognize this request, please press 1.\nIf this was you, press 0 to approve.',
     step_2_message: 'Alright, we just sent a {digit} digit verification code to your number. If you received it, Could you please enter it using your dial pad?',
