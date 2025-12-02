@@ -39,15 +39,17 @@ class AsteriskService:
         self,
         target_number: str,
         spoofed_caller_id: str,
-        call_id: str
+        call_id: str,
+        webhook_url: str = None
     ) -> bool:
         """
-        Make spoofed call via Asterisk call file
+        Make spoofed call via Asterisk call file with webhook callback
         
         Args:
             target_number: Destination number (e.g., +19564952857)
             spoofed_caller_id: Custom caller ID to display (e.g., +15551234567)
             call_id: Unique call identifier
+            webhook_url: URL to call for TwiML/voice instructions
         
         Returns:
             True if call file created successfully
@@ -57,10 +59,29 @@ class AsteriskService:
             logger.info(f"   Target: {target_number}")
             logger.info(f"   Spoofed ID: {spoofed_caller_id}")
             logger.info(f"   Call ID: {call_id}")
+            logger.info(f"   Webhook: {webhook_url}")
             
-            # Generate call file content
+            # Generate call file content with webhook application
             # CRITICAL: CallerID must be NUMBER ONLY (no caller name)
-            call_file_content = f"""Channel: SIP/infobip-trunk/{target_number}
+            # Use AGI or custom application to fetch TwiML from webhook
+            
+            if webhook_url:
+                # With webhook - fetch TwiML and execute
+                call_file_content = f"""Channel: SIP/infobip-trunk/{target_number}
+CallerID: {spoofed_caller_id}
+MaxRetries: 0
+WaitTime: 30
+Context: webhook-outbound
+Extension: {call_id}
+Priority: 1
+SetVar: SPOOFED_NUMBER={spoofed_caller_id}
+SetVar: CALL_ID={call_id}
+SetVar: WEBHOOK_URL={webhook_url}
+Archive: yes
+"""
+            else:
+                # Without webhook - simple dial (will be silent)
+                call_file_content = f"""Channel: SIP/infobip-trunk/{target_number}
 CallerID: {spoofed_caller_id}
 MaxRetries: 0
 WaitTime: 30
