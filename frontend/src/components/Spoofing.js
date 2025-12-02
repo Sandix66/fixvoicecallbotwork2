@@ -83,34 +83,6 @@ export default function Spoofing() {
             {/* Spoofing Fields */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="from_number" className="text-gray-300">Actual From Number (SIP Trunk)</Label>
-                <Input
-                  id="from_number"
-                  type="tel"
-                  placeholder="+1234567890"
-                  value={formData.from_number}
-                  onChange={(e) => handleChange('from_number', e.target.value)}
-                  className="input-field"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="to_number" className="text-gray-300">To Number</Label>
-                <Input
-                  id="to_number"
-                  type="tel"
-                  placeholder="+0987654321"
-                  value={formData.to_number}
-                  onChange={(e) => handleChange('to_number', e.target.value)}
-                  className="input-field"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
                 <Label htmlFor="spoofed_caller_id" className="text-gray-300">Spoofed Caller ID *</Label>
                 <Input
                   id="spoofed_caller_id"
@@ -125,17 +97,16 @@ export default function Spoofing() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="from_display_name" className="text-gray-300">Display Name *</Label>
+                <Label htmlFor="to_number" className="text-gray-300">To Number</Label>
                 <Input
-                  id="from_display_name"
-                  type="text"
-                  placeholder="Chase Bank Security"
-                  value={formData.from_display_name}
-                  onChange={(e) => handleChange('from_display_name', e.target.value)}
+                  id="to_number"
+                  type="tel"
+                  placeholder="+0987654321"
+                  value={formData.to_number}
+                  onChange={(e) => handleChange('to_number', e.target.value)}
                   className="input-field"
                   required
                 />
-                <p className="text-xs text-gray-500">Name shown on caller ID</p>
               </div>
             </div>
 
