@@ -427,9 +427,57 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
         logger.info(f"📞 SIP Spoofed call created: {call_id}")
         logger.info(f"   Spoofed: {call_data.spoofed_caller_id} -> {call_data.to_number}")
         
-        # Generate webhook URL for Asterisk to call back
-        backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
-        webhook_url = f"{backend_url}/api/webhooks/asterisk/{call_id}"
+        # Pre-generate ALL audio files via Deepgram
+        voice = call_data.tts_voice
+        audio_files = {}
+        audio_paths = {}
+        
+        if deepgram.is_deepgram_voice(voice):
+            logger.info(f"🎙️ Pre-generating Deepgram audio for spoofing call...")
+            
+            try:
+                # Generate Step 1 audio
+                step_1_audio_url = await deepgram.text_to_speech(step_1_message, voice)
+                audio_id_1 = step_1_audio_url.split('/')[-1].replace('.mp3', '')
+                audio_files['step_1'] = deepgram.get_audio_file(audio_id_1)
+                logger.info(f"✅ Step 1 audio generated")
+                
+                # Generate Step 2 audio
+                step_2_audio_url = await deepgram.text_to_speech(step_2_message, voice)
+                audio_id_2 = step_2_audio_url.split('/')[-1].replace('.mp3', '')
+                audio_files['step_2'] = deepgram.get_audio_file(audio_id_2)
+                logger.info(f"✅ Step 2 audio generated")
+                
+                # Generate Step 3 audio
+                step_3_audio_url = await deepgram.text_to_speech(step_3_message, voice)
+                audio_id_3 = step_3_audio_url.split('/')[-1].replace('.mp3', '')
+                audio_files['step_3'] = deepgram.get_audio_file(audio_id_3)
+                logger.info(f"✅ Step 3 audio generated")
+                
+                # Generate Accepted audio
+                accepted_audio_url = await deepgram.text_to_speech(accepted_message, voice)
+                audio_id_acc = accepted_audio_url.split('/')[-1].replace('.mp3', '')
+                audio_files['accepted'] = deepgram.get_audio_file(audio_id_acc)
+                logger.info(f"✅ Accepted audio generated")
+                
+                # Generate Rejected audio
+                rejected_audio_url = await deepgram.text_to_speech(rejected_message, voice)
+                audio_id_rej = rejected_audio_url.split('/')[-1].replace('.mp3', '')
+                audio_files['rejected'] = deepgram.get_audio_file(audio_id_rej)
+                logger.info(f"✅ Rejected audio generated")
+                
+                # Upload audio files to Asterisk VPS
+                from services.asterisk_service import AsteriskService
+                asterisk = AsteriskService()
+                audio_paths = await asterisk.upload_audio_files(call_id, audio_files)
+                logger.info(f"✅ All audio files uploaded to Asterisk VPS")
+                
+            except Exception as e:
+                logger.error(f"❌ Failed to generate/upload audio: {e}")
+                raise HTTPException(status_code=500, detail="Failed to generate voice audio")
+        else:
+            # For SignalWire voices, use TTS on the fly (not pre-generated)
+            logger.info(f"⚠️ SignalWire voice selected for spoofing - audio will be generated on-demand")
         
         # Initiate call via Asterisk on VPS
         from services.asterisk_service import AsteriskService
@@ -440,7 +488,7 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
                 target_number=call_data.to_number,
                 spoofed_caller_id=call_data.spoofed_caller_id,
                 call_id=call_id,
-                webhook_url=webhook_url
+                audio_paths=audio_paths if audio_paths else None
             )
             
             if success:
