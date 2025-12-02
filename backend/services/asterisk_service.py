@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class AsteriskService:
     def __init__(self):
-        # VPS Credentials from context
+        # VPS Credentials
         self.host = "139.59.241.253"
         self.username = "root"
         self.password = os.getenv('ASTERISK_VPS_PASSWORD', 'Pekanbaru236@Nasya')
@@ -16,6 +16,7 @@ class AsteriskService:
         
         # Asterisk paths
         self.call_files_dir = "/var/spool/asterisk/outgoing"
+        self.audio_dir = "/var/lib/asterisk/sounds/custom"
         self.temp_dir = "/tmp/asterisk_calls"
     
     def _create_ssh_client(self):
@@ -35,21 +36,71 @@ class AsteriskService:
             logger.error(f"SSH connection failed: {e}")
             raise
     
+    async def upload_audio_files(self, call_id: str, audio_files: dict) -> dict:
+        """
+        Upload pre-generated audio files to Asterisk VPS
+        
+        Args:
+            call_id: Unique call identifier
+            audio_files: Dict with keys (step_1, step_2, step_3, accepted, rejected) -> audio bytes
+        
+        Returns:
+            Dict with audio file paths on VPS
+        """
+        try:
+            ssh_client = self._create_ssh_client()
+            sftp = ssh_client.open_sftp()
+            
+            audio_paths = {}
+            
+            # Create custom sounds directory if not exists
+            try:
+                sftp.stat(self.audio_dir)
+            except:
+                stdin, stdout, stderr = ssh_client.exec_command(f"mkdir -p {self.audio_dir}")
+                stdout.read()
+            
+            # Upload each audio file
+            for step_name, audio_bytes in audio_files.items():
+                if audio_bytes:
+                    remote_filename = f"{call_id}_{step_name}"
+                    remote_path = f"{self.audio_dir}/{remote_filename}"
+                    
+                    # Write audio to remote file
+                    with sftp.file(remote_path, 'wb') as f:
+                        f.write(audio_bytes)
+                    
+                    sftp.chmod(remote_path, 0o644)
+                    
+                    # Store path without extension (Asterisk adds .mp3 automatically)
+                    audio_paths[step_name] = f"custom/{remote_filename}"
+                    
+                    logger.info(f"✅ Uploaded {step_name}: {remote_path} ({len(audio_bytes)} bytes)")
+            
+            sftp.close()
+            ssh_client.close()
+            
+            return audio_paths
+            
+        except Exception as e:
+            logger.error(f"Error uploading audio files: {e}")
+            raise
+    
     async def make_spoofed_call(
         self,
         target_number: str,
         spoofed_caller_id: str,
         call_id: str,
-        webhook_url: str = None
+        audio_paths: dict = None
     ) -> bool:
         """
-        Make spoofed call via Asterisk call file with webhook callback
+        Make spoofed call via Asterisk call file with pre-generated audio
         
         Args:
-            target_number: Destination number (e.g., +19564952857)
-            spoofed_caller_id: Custom caller ID to display (e.g., +15551234567)
+            target_number: Destination number
+            spoofed_caller_id: Custom caller ID to display
             call_id: Unique call identifier
-            webhook_url: URL to call for TwiML/voice instructions
+            audio_paths: Dict with audio file paths (step_1, step_2, etc)
         
         Returns:
             True if call file created successfully
@@ -58,38 +109,28 @@ class AsteriskService:
             logger.info(f"📞 Creating spoofed call via Asterisk")
             logger.info(f"   Target: {target_number}")
             logger.info(f"   Spoofed ID: {spoofed_caller_id}")
-            logger.info(f"   Call ID: {call_id}")
-            logger.info(f"   Webhook: {webhook_url}")
             
-            # Generate call file content with webhook application
-            # CRITICAL: CallerID must be NUMBER ONLY (no caller name)
-            # Use AGI or custom application to fetch TwiML from webhook
+            # Get backend webhook URL for status updates
+            backend_url = os.getenv('BACKEND_URL', 'https://lanjutkan-ini.preview.emergentagent.com')
+            status_url = f"{backend_url}/api/webhooks/asterisk/{call_id}/status"
             
-            if webhook_url:
-                # With webhook - fetch TwiML and execute
-                call_file_content = f"""Channel: SIP/infobip-trunk/{target_number}
+            # Generate call file with audio playback
+            # CRITICAL: CallerID must be NUMBER ONLY
+            call_file_content = f"""Channel: SIP/infobip-trunk/{target_number}
 CallerID: {spoofed_caller_id}
 MaxRetries: 0
 WaitTime: 30
-Context: webhook-outbound
+Context: spoofing-outbound
 Extension: {call_id}
 Priority: 1
 SetVar: SPOOFED_NUMBER={spoofed_caller_id}
 SetVar: CALL_ID={call_id}
-SetVar: WEBHOOK_URL={webhook_url}
-Archive: yes
-"""
-            else:
-                # Without webhook - simple dial (will be silent)
-                call_file_content = f"""Channel: SIP/infobip-trunk/{target_number}
-CallerID: {spoofed_caller_id}
-MaxRetries: 0
-WaitTime: 30
-Context: outbound
-Extension: {target_number}
-Priority: 1
-SetVar: SPOOFED_NUMBER={spoofed_caller_id}
-SetVar: CALL_ID={call_id}
+SetVar: AUDIO_STEP1={audio_paths.get('step_1', '') if audio_paths else ''}
+SetVar: AUDIO_STEP2={audio_paths.get('step_2', '') if audio_paths else ''}
+SetVar: AUDIO_STEP3={audio_paths.get('step_3', '') if audio_paths else ''}
+SetVar: AUDIO_ACCEPTED={audio_paths.get('accepted', '') if audio_paths else ''}
+SetVar: AUDIO_REJECTED={audio_paths.get('rejected', '') if audio_paths else ''}
+SetVar: STATUS_URL={status_url}
 Archive: yes
 """
             
@@ -99,6 +140,39 @@ Archive: yes
             
             # SSH to VPS and create call file
             ssh_client = self._create_ssh_client()
+            
+            try:
+                sftp = ssh_client.open_sftp()
+                
+                # Write call file to /tmp first
+                temp_path = f"/tmp/{temp_filename}"
+                with sftp.file(temp_path, 'w') as f:
+                    f.write(call_file_content)
+                
+                sftp.chmod(temp_path, 0o644)
+                
+                # Move to outgoing directory (atomic)
+                stdin, stdout, stderr = ssh_client.exec_command(
+                    f"mv {temp_path} {self.call_files_dir}/{final_filename}"
+                )
+                
+                error_output = stderr.read().decode()
+                if error_output:
+                    logger.error(f"Error moving call file: {error_output}")
+                    raise Exception(error_output)
+                
+                logger.info(f"✅ Call file created: {self.call_files_dir}/{final_filename}")
+                
+                sftp.close()
+                
+                return True
+                
+            finally:
+                ssh_client.close()
+        
+        except Exception as e:
+            logger.error(f"❌ Error creating spoofed call: {e}")
+            raise
             
             try:
                 # Create temp file content
