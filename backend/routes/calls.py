@@ -5,6 +5,7 @@ from services.signalwire_service import SignalWireService
 from services.infobip_service import InfobipService
 from services.infobip_sip_service import InfobipSIPService
 from services.telegram_service import TelegramService
+from services.deepgram_service import DeepgramService
 from services.websocket_manager import manager
 from utils.auth_middleware import verify_token, verify_admin
 from typing import List
@@ -18,6 +19,8 @@ router = APIRouter(prefix="/calls", tags=["Calls"])
 signalwire = SignalWireService()
 infobip = InfobipService()
 infobip_sip = InfobipSIPService()
+telegram = TelegramService()
+deepgram = DeepgramService()
 telegram = TelegramService()
 
 # Store active calls in memory (in production, use Redis)
