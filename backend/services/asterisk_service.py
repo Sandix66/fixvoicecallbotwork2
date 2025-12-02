@@ -115,13 +115,13 @@ class AsteriskService:
             status_url = f"{backend_url}/api/webhooks/asterisk/{call_id}/status"
             
             # Generate call file with audio playback
-            # CRITICAL: CallerID must be NUMBER ONLY
+            # CRITICAL: Extension MUST be target_number (not call_id)!
             call_file_content = f"""Channel: SIP/infobip-trunk/{target_number}
 CallerID: {spoofed_caller_id}
 MaxRetries: 0
 WaitTime: 30
 Context: spoofing-outbound
-Extension: {call_id}
+Extension: {target_number}
 Priority: 1
 SetVar: SPOOFED_NUMBER={spoofed_caller_id}
 SetVar: CALL_ID={call_id}
